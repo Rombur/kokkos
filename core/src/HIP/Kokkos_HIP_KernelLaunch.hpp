@@ -202,7 +202,7 @@ struct HIPParallelLaunch<DriverType, Kokkos::LaunchBounds<0, 0>,
       HIP_SAFE_CALL(hipMemcpyAsync(d_driver, &driver, sizeof(DriverType),
                                    hipMemcpyHostToDevice,
                                    hip_instance->m_stream));
-      hip_parallel_launch_local_memory<DriverType, 1024, 1>
+      hip_parallel_launch_local_memory<DriverType, 256, 1>
           <<<grid, block, shmem, hip_instance->m_stream>>>(d_driver);
 
 #if defined(KOKKOS_ENABLE_DEBUG_BOUNDS_CHECK)
@@ -218,7 +218,7 @@ struct HIPParallelLaunch<DriverType, Kokkos::LaunchBounds<0, 0>,
       hipFuncAttributes attr;
       HIP_SAFE_CALL(hipFuncGetAttributes(
           &attr, reinterpret_cast<void const *>(
-                     hip_parallel_launch_local_memory<DriverType, 1024, 1>)));
+                     hip_parallel_launch_local_memory<DriverType, 256, 1>)));
       return attr;
     }();
     return attr;
