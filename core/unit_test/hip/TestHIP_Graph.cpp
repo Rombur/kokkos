@@ -1,3 +1,4 @@
+
 /*
 //@HEADER
 // ************************************************************************
@@ -42,13 +43,5 @@
 //@HEADER
 */
 
-#ifndef KOKKOS_TEST_HIP_HPP
-#define KOKKOS_TEST_HIP_HPP
-
-#include <gtest/gtest.h>
-
-#define TEST_CATEGORY hip
-#define TEST_EXECSPACE Kokkos::Experimental::HIP
-#define TEST_CATEGORY_FIXTURE(name) hip_##name
-
-#endif
+#include <hip/TestHIP_Category.hpp>
+#include <TestGraph.hpp>
