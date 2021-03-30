@@ -598,7 +598,7 @@ ENDMACRO()
 #
 #   ``HEADER <name>``
 #
-#     If specified, this gives the name of a header to to look for
+#     If specified, this gives the name of a header to look for
 #
 #   ``HEADERS <name1> <name2> ...``
 #
