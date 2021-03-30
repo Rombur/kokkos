@@ -72,6 +72,11 @@ KOKKOS_ADD_LIBRARY(
   ADD_BUILD_OPTIONS # core should be given all the necessary compiler/linker flags
 )
 
+TARGET_INCLUDE_DIRECTORIES(kokkoscore PUBLIC ${DAGEE_ROOT}/DAGEE-lib/include)
+TARGET_INCLUDE_DIRECTORIES(kokkoscore PUBLIC ${DAGEE_ROOT}/cppUtils/include)
+TARGET_INCLUDE_DIRECTORIES(kokkoscore PUBLIC ${ATMI_ROOT}/include)
+TARGET_LINK_LIBRARIES(kokkoscore PUBLIC ${ATMI_ROOT}/lib/libatmi_runtime.so)
+
 KOKKOS_LIB_INCLUDE_DIRECTORIES(kokkoscore
   ${KOKKOS_TOP_BUILD_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
