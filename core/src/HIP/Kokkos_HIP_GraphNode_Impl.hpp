@@ -42,34 +42,56 @@
 //@HEADER
 */
 
-#ifndef KOKKOS_SETUP_HIP_HPP_
-#define KOKKOS_SETUP_HIP_HPP_
+#ifndef KOKKOS_HIP_GRAPHNODE_IMPL_HPP
+#define KOKKOS_HIP_GRAPHNODE_IMPL_HPP
 
-#if defined(KOKKOS_ENABLE_HIP)
+#include <Kokkos_Macros.hpp>
 
-#define KOKKOS_IMPL_HIP_CLANG_WORKAROUND
+#ifdef KOKKOS_HIP_ENABLE_GRAPHS
 
-#define HIP_ENABLE_PRINTF
-#include <hip/hip_runtime.h>
-#include <hip/hip_runtime_api.h>
+#include <Kokkos_Graph_fwd.hpp>
 
-#define KOKKOS_LAMBDA [=] __host__ __device__
-#if defined(KOKKOS_ENABLE_CXX17) || defined(KOKKOS_ENABLE_CXX20)
-#define KOKKOS_CLASS_LAMBDA [ =, *this ] __host__ __device__
+#include <impl/Kokkos_GraphImpl.hpp>
+
+#include <dagee/ATMIdagExecutor.h>
+
+namespace Kokkos {
+namespace Impl {
+template <>
+struct GraphNodeBackendSpecificDetails<Kokkos::Experimental::HIP> {
+  explicit GraphNodeBackendSpecificDetails() = default;
+
+  explicit GraphNodeBackendSpecificDetails(
+      _graph_node_is_root_ctor_tag) noexcept {}
+
+  virtual ~GraphNodeBackendSpecificDetails() = default;
+
+  dagee::DAGbase<dagee::ATMIgpuKernelInstance<dagee::StdAllocatorFactory<void>>,
+                 dagee::StdAllocatorFactory<void>, true, true>::NodePtr node =
+      nullptr;
+
+  std::unique_ptr<dagee::ATMIgpuKernelInstance<dagee::StdAllocatorFactory<>>>
+      task;
+};
+
+template <typename Kernel, typename PredecessorRef>
+struct GraphNodeBackendDetailsBeforeTypeErasure<Kokkos::Experimental::HIP,
+                                                Kernel, PredecessorRef> {
+ protected:
+  GraphNodeBackendDetailsBeforeTypeErasure(
+      Kokkos::Experimental::HIP const &, Kernel &, PredecessorRef const &,
+      GraphNodeBackendSpecificDetails<Kokkos::Experimental::HIP> &) noexcept {}
+
+  GraphNodeBackendDetailsBeforeTypeErasure(
+      Kokkos::Experimental::HIP const &, _graph_node_is_root_ctor_tag,
+      GraphNodeBackendSpecificDetails<Kokkos::Experimental::HIP> &) noexcept {}
+};
+
+}  // namespace Impl
+}  // namespace Kokkos
+
+#include <HIP/Kokkos_HIP_GraphNodeKernel.hpp>
+
 #endif
-
-#define KOKKOS_IMPL_FORCEINLINE_FUNCTION __device__ __host__ __forceinline__
-#define KOKKOS_IMPL_INLINE_FUNCTION __device__ __host__ inline
-#define KOKKOS_DEFAULTED_FUNCTION __device__ __host__ inline
-#define KOKKOS_INLINE_FUNCTION_DELETED __device__ __host__ inline
-#define KOKKOS_IMPL_FUNCTION __device__ __host__
-#define KOKKOS_IMPL_HOST_FUNCTION __host__
-#define KOKKOS_IMPL_DEVICE_FUNCTION __device__
-
-#if 1  // defined(KOKKOS_ENABLE_DAGEE)
-#define KOKKOS_HIP_ENABLE_GRAPHS
-#endif
-
-#endif  // #if defined( KOKKOS_ENABLE_HIP )
 
 #endif

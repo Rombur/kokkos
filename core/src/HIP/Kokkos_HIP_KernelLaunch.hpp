@@ -51,6 +51,8 @@
 
 #include <HIP/Kokkos_HIP_Error.hpp>
 #include <HIP/Kokkos_HIP_Instance.hpp>
+#include <HIP/Kokkos_HIP_GraphNodeKernel.hpp>
+#include <impl/Kokkos_GraphImpl_fwd.hpp>
 #include <Kokkos_HIP_Space.hpp>
 
 // Must use global variable on the device with HIP-Clang
@@ -288,6 +290,28 @@ struct HIPParallelLaunchKernelInvoker<DriverType, LaunchBounds,
     (base_t::get_kernel_func())<<<grid, block, shmem, hip_instance->m_stream>>>(
         driver);
   }
+
+#ifdef KOKKOS_HIP_ENABLE_GRAPHS
+  // FIXME
+  inline static void create_parallel_launch_graph_node(
+      DriverType const &driver, dim3 const &grid, dim3 const &block,
+      int /*shmem*/, HIPInternal const * /*hip_instance*/,
+      bool /*prefer_shmem*/) {
+    auto const &graph = ::Kokkos::Impl::get_hip_graph_from_kernel(driver);
+    KOKKOS_EXPECTS(bool(graph));
+    auto &graph_node = ::Kokkos::Impl::get_hip_graph_node_from_kernel(driver);
+    // Expect node not yet initialized
+    KOKKOS_EXPECTS(!bool(graph_node));
+
+    // TODO I need to get the gpu_executor from somewhere
+    dagee::GpuExecutorAtmi gpu_executor;
+    auto registered_kernel =
+        gpu_executor.registerKernel<DriverType>(base_t::get_kernel_func());
+    graph_node->node_details::task = std::make_unique<
+        dagee::ATMIgpuKernelInstance<dagee::StdAllocatorFactory<>>>(
+        gpu_executor.makeTask(grid, block, registered_kernel, driver));
+  }
+#endif
 };
 
 // HIPLaunchMechanism::GlobalMemory specialization
@@ -305,6 +329,28 @@ struct HIPParallelLaunchKernelInvoker<DriverType, LaunchBounds,
     (base_t::get_kernel_func())<<<grid, block, shmem, hip_instance->m_stream>>>(
         driver);
   }
+
+  // FIXME
+#ifdef KOKKOS_HIP_ENABLE_GRAPHS
+  inline static void create_parallel_launch_graph_node(
+      DriverType const &driver, dim3 const &grid, dim3 const &block,
+      int /*shmem*/, HIPInternal const * /*hip_instance*/,
+      bool /*prefer_shmem*/) {
+    // TODO temporary hack
+    auto const &graph = ::Kokkos::Impl::get_hip_graph_from_kernel(driver);
+    KOKKOS_EXPECTS(bool(graph));
+    auto &graph_node = ::Kokkos::Impl::get_hip_graph_node_from_kernel(driver);
+    // Expect node not yet initialized
+    KOKKOS_EXPECTS(!bool(graph_node));
+
+    // TODO I need to get the gpu_executor from somewhere
+    dagee::GpuExecutorAtmi gpu_executor;
+    auto registered_kernel =
+        gpu_executor.registerKernel<DriverType>(base_t::get_kernel_func());
+    graph_node->node_details::task =
+        gpu_executor.makeTask(grid, block, registered_kernel, driver);
+  }
+#endif
 };
 
 // HIPLaunchMechanism::ConstantMemory specializations
@@ -351,14 +397,20 @@ struct HIPParallelLaunchKernelInvoker<DriverType, LaunchBounds,
 //-----------------------------//
 template <typename DriverType, typename LaunchBounds = Kokkos::LaunchBounds<>,
           HIPLaunchMechanism LaunchMechanism =
-              DeduceHIPLaunchMechanism<DriverType>::launch_mechanism>
+              DeduceHIPLaunchMechanism<DriverType>::launch_mechanism,
+          bool DoGraph = DriverType::Policy::is_graph_kernel::value
+#ifndef KOKKOS_CUDA_ENABLE_GRAPHS
+                         && false
+#endif
+          >
 struct HIPParallelLaunch;
 
 template <typename DriverType, unsigned int MaxThreadsPerBlock,
           unsigned int MinBlocksPerSM, HIPLaunchMechanism LaunchMechanism>
 struct HIPParallelLaunch<
     DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
-    LaunchMechanism>
+    LaunchMechanism,
+    /* DoGraph = */ false>
     : HIPParallelLaunchKernelInvoker<
           DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
           LaunchMechanism> {
@@ -401,6 +453,26 @@ struct HIPParallelLaunch<
     return attr;
   }
 };
+
+#ifdef KOKKOS_HIP_ENABLE_GRAPHS
+template <typename DriverType, unsigned int MaxThreadsPerBlock,
+          unsigned int MinBlocksPerSM, HIPLaunchMechanism LaunchMechanism>
+struct HIPParallelLaunch<
+    DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
+    LaunchMechanism,
+    /* DoGraph = */ true>
+    : HIPParallelLaunchKernelInvoker<
+          DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
+          LaunchMechanism> {
+  using base_t = HIPParallelLaunchKernelInvoker<
+      DriverType, Kokkos::LaunchBounds<MaxThreadsPerBlock, MinBlocksPerSM>,
+      LaunchMechanism>;
+  template <class... Args>
+  HIPParallelLaunch(Args &&...args) {
+    base_t::create_parallel_launch_graph_node((Args &&) args...);
+  }
+};
+#endif
 }  // namespace Impl
 }  // namespace Experimental
 }  // namespace Kokkos
