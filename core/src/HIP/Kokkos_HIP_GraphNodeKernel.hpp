@@ -55,6 +55,7 @@
 #include <impl/Kokkos_GraphImpl.hpp>    // GraphAccess needs to be complete
 #include <impl/Kokkos_SharedAlloc.hpp>  // SharedAllocationRecord
 
+#include <Kokkos_HIP_Space.hpp>
 #include <Kokkos_Parallel.hpp>
 #include <Kokkos_Parallel_Reduce.hpp>
 #include <Kokkos_PointerOwnership.hpp>
@@ -74,11 +75,12 @@ class GraphNodeKernelImpl<Kokkos::Experimental::HIP, PolicyType, Functor,
       PatternTag, Functor, PolicyType, Args...,
       Kokkos::Experimental::HIP>::type;
   using size_type = Kokkos::Experimental::HIP::size_type;
-  Kokkos::ObservingRawPtr<const dagee::DAGbase<dagee::GpuExecutorAtmi>>
+  Kokkos::ObservingRawPtr<
+      const dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::DAG>
       m_graph_ptr = nullptr;
-  Kokkos::ObservingRawPtr<dagee::DAGbase<dagee::GpuExecutorAtmi>::Node>
+  Kokkos::ObservingRawPtr<dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::Node>
       m_graph_node_ptr = nullptr;
-  // Note: owned pointer to CudaSpace memory (used for global memory launches),
+  // Note: owned pointer to HIPSpace memory (used for global memory launches),
   // which we're responsible for deallocating, but not responsible for calling
   // its destructor.
   using Record =
@@ -115,21 +117,22 @@ class GraphNodeKernelImpl<Kokkos::Experimental::HIP, PolicyType, Functor,
   }
 
   void set_hip_graph_ptr(
-      dagee::DAGbase<dagee::GpuExecutorAtmi>* arg_graph_ptr) {
+      dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::DAGptr arg_graph_ptr) {
     m_graph_ptr = arg_graph_ptr;
   }
 
   void set_hip_graph_node_ptr(
-      dagee::DAGbase<dagee::GpuExecutorAtmi>::NodePtr arg_node_ptr) {
+      dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::NodePtr arg_node_ptr) {
     m_graph_node_ptr = arg_node_ptr;
   }
 
-  dagee::DAGbase<dagee::GpuExecutorAtmi>::NodePtr get_hip_graph_node_ptr()
-      const {
+  dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::NodePtr
+  get_hip_graph_node_ptr() const {
     return m_graph_node_ptr;
   }
 
-  dagee::DAGbase<dagee::GpuExecutorAtmi> const* get_hip_graph_ptr() const {
+  dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::DAG const* get_hip_graph_ptr()
+      const {
     return m_graph_ptr;
   }
 

@@ -66,9 +66,7 @@ struct GraphNodeBackendSpecificDetails<Kokkos::Experimental::HIP> {
 
   virtual ~GraphNodeBackendSpecificDetails() = default;
 
-  dagee::DAGbase<dagee::ATMIgpuKernelInstance<dagee::StdAllocatorFactory<void>>,
-                 dagee::StdAllocatorFactory<void>, true, true>::NodePtr node =
-      nullptr;
+  dagee::ATMIdagExecutor<dagee::GpuExecutorAtmi>::NodePtr node = nullptr;
 
   std::unique_ptr<dagee::ATMIgpuKernelInstance<dagee::StdAllocatorFactory<>>>
       task;

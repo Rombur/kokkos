@@ -62,6 +62,9 @@
 
 namespace Kokkos {
 namespace Impl {
+
+__global__ void empty_hip_kernel() {}
+
 template <>
 struct GraphImpl<Kokkos::Experimental::HIP> {
  public:
@@ -100,19 +103,13 @@ struct GraphImpl<Kokkos::Experimental::HIP> {
   };
 
   explicit GraphImpl(Kokkos::Experimental::HIP arg_instance)
-      : m_execution_space(std::move(arg_instance)), m_graph_exec(m_gpu_exec) {}
+      : m_execution_space(std::move(arg_instance)), m_graph_exec(m_gpu_exec) {
+    m_graph = m_graph_exec.makeDAG();
+  }
 
   void add_node(std::shared_ptr<aggregate_node_impl_t> const& arg_node_ptr) {
-    // FIXME we need to define blocks, threadsPerBlock, and we need to register
-    // the kernel somewhere. THIS IS DONE in task
     arg_node_ptr->node_details_t::node =
         m_graph->addNode(*(arg_node_ptr->node_details_t::task));
-    // // All of the predecessors are just added as normal, so all we need to
-    // // do here is add an empty node
-    // CUDA_SAFE_CALL(cudaGraphAddEmptyNode(&(arg_node_ptr->node_details_t::node),
-    //                                      m_graph,
-    //                                      /* dependencies = */ nullptr,
-    //                                      /* numDependencies = */ 0));
   }
 
   template <class NodeImpl>
@@ -122,21 +119,8 @@ struct GraphImpl<Kokkos::Experimental::HIP> {
     static_assert(NodeImpl::kernel_type::Policy::is_graph_kernel::value,
                   "Internal error.");
     KOKKOS_EXPECTS(bool(arg_node_ptr));
-    // TODO: here we need to pass a task, i.e., *arg_node_ptr needs to point to
-    // a task and maybe a node too?
     arg_node_ptr->node_details_t::node =
         m_graph->addNode(*(arg_node_ptr->node_details_t::task));
-    // // The Kernel launch from the execute() method has been shimmed to insert
-    // // the node into the graph
-    // auto& kernel = arg_node_ptr->get_kernel();
-    // // note: using arg_node_ptr->node_details_t::node caused an ICE in
-    // NVCC 10.1 auto& cuda_node =
-    // static_cast<node_details_t*>(arg_node_ptr.get())->node;
-    // KOKKOS_EXPECTS(!bool(cuda_node));
-    // kernel.set_cuda_graph_ptr(&m_graph);
-    // kernel.set_cuda_graph_node_ptr(&cuda_node);
-    // kernel.execute();
-    // KOKKOS_ENSURES(bool(cuda_node));
   }
 
   template <class NodeImplPtr, class PredecessorRef>
@@ -147,35 +131,13 @@ struct GraphImpl<Kokkos::Experimental::HIP> {
     KOKKOS_EXPECTS(bool(arg_node_ptr))
     auto pred_ptr = GraphAccess::get_node_ptr(arg_pred_ref);
     KOKKOS_EXPECTS(bool(pred_ptr));
-    // TODO: here we need to pass a task, i.e., *arg_node_ptr needs to point to
-    // a task and maybe a node too?
     arg_node_ptr->node_details_t::node =
-        m_graph->addNode(arg_node_ptr->node_details_t::task);
+        m_graph->addNode(*arg_node_ptr->node_details_t::task);
     m_graph->addEdge(pred_ptr->node_details_t::node,
                      arg_node_ptr->node_details_t::node);
-
-    // clang-format off
-    // NOTE const-qualifiers below are commented out because of an API break
-    // from CUDA 10.0 to CUDA 10.1
-    // cudaGraphAddDependencies(cudaGraph_t, cudaGraphNode_t*, cudaGraphNode_t*, size_t)
-    // cudaGraphAddDependencies(cudaGraph_t, const cudaGraphNode_t*, const cudaGraphNode_t*, size_t)
-    // clang-format on
-    // auto /*const*/& pred_cuda_node = pred_ptr->node_details_t::node;
-    // KOKKOS_EXPECTS(bool(pred_cuda_node))
-
-    // auto /*const*/& cuda_node = arg_node_ptr->node_details_t::node;
-    // KOKKOS_EXPECTS(bool(cuda_node))
-
-    // CUDA_SAFE_CALL(
-    //     cudaGraphAddDependencies(m_graph, &pred_cuda_node, &cuda_node, 1));
   }
 
-  void submit() {
-    if (!bool(m_graph)) {
-      _instantiate_graph();
-    }
-    m_graph_exec.execute(m_graph);
-  }
+  void submit() { m_graph_exec.execute(m_graph); }
 
   execution_space const& get_execution_space() const noexcept {
     return m_execution_space;
@@ -185,11 +147,13 @@ struct GraphImpl<Kokkos::Experimental::HIP> {
     KOKKOS_EXPECTS(bool(m_graph))
     auto rv = std::make_shared<root_node_impl_t>(
         get_execution_space(), _graph_node_is_root_ctor_tag{});
-    // FIXME Create an empty node
-    // CUDA_SAFE_CALL(cudaGraphAddEmptyNode(&(rv->node_details_t::node),
-    // m_graph,
-    //                                     /* dependencies = */ nullptr,
-    //                                     /* numDependencies = */ 0));
+    // Create an empy node
+    // FIXME it would be nice if there was a better way to do this
+    std::cout << "here " << std::endl;
+    auto empty_kernel_info = m_gpu_exec.registerKernel<>(&empty_hip_kernel);
+    std::cout << "here " << std::endl;
+    //   rv->node_details_t::node =
+    //       m_graph->addNode(m_gpu_exec.makeTask(0, 0, empty_kernel_info));
     KOKKOS_ENSURES(bool(rv->node_details_t::node))
     return rv;
   }
