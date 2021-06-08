@@ -63,8 +63,8 @@ namespace Impl {
 
 int g_openmp_hardware_max_threads = 1;
 
-__thread int t_openmp_hardware_id            = 0;
-__thread Impl::OpenMPExec *t_openmp_instance = nullptr;
+thread_local int t_openmp_hardware_id = 0;
+Impl::OpenMPExec *t_openmp_instance   = nullptr;
 
 void OpenMPExec::validate_partition(const int nthreads, int &num_partitions,
                                     int &partition_size) {

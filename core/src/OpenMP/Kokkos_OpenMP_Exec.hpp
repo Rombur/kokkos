@@ -76,8 +76,8 @@ class OpenMPExec;
 
 extern int g_openmp_hardware_max_threads;
 
-extern __thread int t_openmp_hardware_id;
-extern __thread OpenMPExec* t_openmp_instance;
+extern thread_local int t_openmp_hardware_id;
+extern OpenMPExec* t_openmp_instance;
 
 //----------------------------------------------------------------------------
 /** \brief  Data for OpenMP thread execution */
