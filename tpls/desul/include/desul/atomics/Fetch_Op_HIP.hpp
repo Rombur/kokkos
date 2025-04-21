@@ -85,7 +85,7 @@ DESUL_IMPL_HIP_ATOMIC_SUB(double)
 
 #undef DESUL_IMPL_HIP_ATOMIC_SUB
 
-#define DESUL_IMPL_HIP_ATOMIC_FETCH_INC(T)                                        \
+#define DESUL_IMPL_HIP_ATOMIC_INC(T)                                              \
   template <class MemoryOrder, class MemoryScope>                                 \
   __device__ inline T device_atomic_fetch_inc(T* ptr, MemoryOrder, MemoryScope) { \
     return __hip_atomic_fetch_add(ptr,                                            \
@@ -100,15 +100,21 @@ DESUL_IMPL_HIP_ATOMIC_SUB(double)
                                   HIPMemoryOrder<MemoryOrder>::value,             \
                                   HIPMemoryScope<MemoryScope>::value);            \
   }
+ template <class MemoryOrder, class MemoryScope>                                 \                                                                                                                                  __device__ inline T device_atomic_inc_fetch(                                    \                                                                                                                                      T* ptr, MemoryOrder order, MemoryScope scope) {                             \                                                                                                                                    return device_atomic_fetch_inc(ptr, order, scope) + 1;                        \                                                                                                                                  }                                                                               \                                                                                                                                  template <class MemoryOrder, class MemoryScope>                                 \                                                                                                                                  __device__ inline T device_atomic_dec_fetch(                                    \                                                                                                                                      T* ptr, MemoryOrder order, MemoryScope scope) {                             \                                                                                                                              
+         return device_atomic_fetch_dec(ptr, order, scope) - 1;                        \                                                                                                                                  }
 
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(int)
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(long)
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(long long)
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(unsigned int)
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(unsigned long)
-DESUL_IMPL_HIP_ATOMIC_FETCH_INC(unsigned long long)
 
-#undef DESUL_IMPL_HIP_ATOMIC_FETCH_INC
+
+
+
+DESUL_IMPL_HIP_ATOMIC_INC(int)
+DESUL_IMPL_HIP_ATOMIC_INC(long)
+DESUL_IMPL_HIP_ATOMIC_INC(long long)
+DESUL_IMPL_HIP_ATOMIC_INC(unsigned int)
+DESUL_IMPL_HIP_ATOMIC_INC(unsigned long)
+DESUL_IMPL_HIP_ATOMIC_INC(unsigned long long)
+
+#undef DESUL_IMPL_HIP_ATOMIC_INC
 
 #define DESUL_IMPL_HIP_ATOMIC_FETCH_INC_MOD(MEMORY_SCOPE, MEMORY_SCOPE_STRING_LITERAL) \
   template <class MemoryOrder>                                                         \
