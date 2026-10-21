@@ -14,6 +14,98 @@ using ExecutionSpace = TEST_EXECSPACE;
 using MemorySpace    = typename ExecutionSpace::memory_space;
 using DeviceType     = typename ExecutionSpace::device_type;
 
+template <class DstMemorySpace, class SrcMemorySpace>
+constexpr bool check_memory_space_traits() {
+  using ExecSpace = typename DstMemorySpace::execution_space;
+  constexpr bool assignable =
+      Kokkos::Impl::MemorySpaceAccess<DstMemorySpace,
+                                      SrcMemorySpace>::assignable;
+  constexpr bool accessible =
+      Kokkos::Impl::MemorySpaceAccess<typename ExecSpace::memory_space,
+                                      SrcMemorySpace>::accessible;
+
+  static_assert(
+      Kokkos::is_assignable_mem_space<DstMemorySpace, SrcMemorySpace>{} ==
+      assignable);
+  static_assert(
+      Kokkos::is_assignable_mem_space_v<DstMemorySpace, SrcMemorySpace> ==
+      assignable);
+  static_assert(Kokkos::is_assignable_mem_space_v<const DstMemorySpace,
+                                                  volatile SrcMemorySpace> ==
+                assignable);
+  static_assert(std::is_same_v<typename Kokkos::is_assignable_mem_space<
+                                   DstMemorySpace, SrcMemorySpace>::type,
+                               std::bool_constant<assignable>>);
+  static_assert(Kokkos::is_accessible_mem_space<ExecSpace, SrcMemorySpace>{} ==
+                accessible);
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecSpace, SrcMemorySpace> ==
+                accessible);
+  static_assert(Kokkos::is_accessible_mem_space_v<const ExecSpace,
+                                                  volatile SrcMemorySpace> ==
+                accessible);
+  static_assert(std::is_same_v<typename Kokkos::is_accessible_mem_space<
+                                   ExecSpace, SrcMemorySpace>::type,
+                               std::bool_constant<accessible>>);
+  return true;
+}
+
+template <class DstMemorySpace, class... SrcMemorySpaces>
+constexpr bool check_memory_space_traits_row() {
+  return (check_memory_space_traits<DstMemorySpace, SrcMemorySpaces>() && ...);
+}
+
+template <class... MemorySpaces>
+constexpr bool check_memory_space_traits_matrix() {
+  return (check_memory_space_traits_row<MemorySpaces, MemorySpaces...>() &&
+          ...);
+}
+
+static_assert(
+    check_memory_space_traits_matrix<
+        MemorySpace, Kokkos::HostSpace, Kokkos::AnonymousSpace,
+        typename ExecutionSpace::scratch_memory_space,
+        typename Kokkos::DefaultHostExecutionSpace::scratch_memory_space
+#ifdef KOKKOS_ENABLE_CUDA
+        ,
+        Kokkos::CudaSpace, Kokkos::CudaUVMSpace, Kokkos::CudaHostPinnedSpace
+#endif
+#ifdef KOKKOS_ENABLE_HIP
+        ,
+        Kokkos::HIPSpace, Kokkos::HIPManagedSpace, Kokkos::HIPHostPinnedSpace
+#endif
+#ifdef KOKKOS_ENABLE_SYCL
+        ,
+        Kokkos::SYCLDeviceUSMSpace, Kokkos::SYCLSharedUSMSpace,
+        Kokkos::SYCLHostUSMSpace
+#endif
+        >());
+
+static_assert(Kokkos::is_assignable_mem_space_v<MemorySpace, MemorySpace>);
+static_assert(Kokkos::is_accessible_mem_space_v<ExecutionSpace, MemorySpace>);
+static_assert(
+    Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::AnonymousSpace>);
+
+static_assert(!Kokkos::is_assignable_mem_space<int, MemorySpace>{});
+static_assert(!Kokkos::is_assignable_mem_space_v<MemorySpace, void>);
+static_assert(!Kokkos::is_assignable_mem_space_v<void, void>);
+static_assert(!Kokkos::is_assignable_mem_space_v<ExecutionSpace, MemorySpace>);
+static_assert(!Kokkos::is_assignable_mem_space_v<MemorySpace, DeviceType>);
+static_assert(!Kokkos::is_assignable_mem_space_v<MemorySpace &, MemorySpace>);
+static_assert(
+    !Kokkos::is_assignable_mem_space_v<MemorySpace, const MemorySpace &>);
+
+static_assert(!Kokkos::is_accessible_mem_space<int, MemorySpace>{});
+static_assert(!Kokkos::is_accessible_mem_space_v<ExecutionSpace, void>);
+static_assert(!Kokkos::is_accessible_mem_space_v<void, void>);
+static_assert(!Kokkos::is_accessible_mem_space_v<MemorySpace, MemorySpace>);
+static_assert(!Kokkos::is_accessible_mem_space_v<DeviceType, MemorySpace>);
+static_assert(
+    !Kokkos::is_accessible_mem_space_v<ExecutionSpace, ExecutionSpace>);
+static_assert(
+    !Kokkos::is_accessible_mem_space_v<ExecutionSpace &, MemorySpace>);
+static_assert(
+    !Kokkos::is_accessible_mem_space_v<ExecutionSpace, const MemorySpace &>);
+
 static_assert(Kokkos::is_execution_space<ExecutionSpace>{});
 static_assert(Kokkos::is_execution_space<ExecutionSpace const>{});
 static_assert(!Kokkos::is_execution_space<ExecutionSpace &>{});

@@ -323,10 +323,57 @@ struct MemorySpaceAccess {
   enum { accessible = assignable };
 };
 
+template <class DstMemorySpace, class SrcMemorySpace,
+          bool = is_memory_space<DstMemorySpace>::value &&
+                 is_memory_space<SrcMemorySpace>::value>
+struct is_assignable_mem_space_helper : std::false_type {};
+
+template <class DstMemorySpace, class SrcMemorySpace>
+struct is_assignable_mem_space_helper<DstMemorySpace, SrcMemorySpace, true>
+    : std::bool_constant<
+          MemorySpaceAccess<DstMemorySpace, SrcMemorySpace>::assignable> {};
+
+template <class ExecutionSpace, class MemorySpace,
+          bool = is_execution_space<ExecutionSpace>::value &&
+                 is_memory_space<MemorySpace>::value>
+struct is_accessible_mem_space_helper : std::false_type {};
+
+template <class ExecutionSpace, class MemorySpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, MemorySpace, true>
+    : std::bool_constant<MemorySpaceAccess<
+          typename ExecutionSpace::memory_space, MemorySpace>::accessible> {};
+
 }  // namespace Impl
 }  // namespace Kokkos
 
 namespace Kokkos {
+
+/**\brief Can a View or pointer to SrcMemorySpace be assigned to one marked
+ *        DstMemorySpace.
+ *
+ * Invalid memory space arguments yield false.
+ */
+template <class DstMemorySpace, class SrcMemorySpace>
+struct is_assignable_mem_space
+    : Impl::is_assignable_mem_space_helper<std::remove_cv_t<DstMemorySpace>,
+                                           std::remove_cv_t<SrcMemorySpace>> {};
+
+template <class DstMemorySpace, class SrcMemorySpace>
+inline constexpr bool is_assignable_mem_space_v =
+    is_assignable_mem_space<DstMemorySpace, SrcMemorySpace>::value;
+
+/**\brief Can ExecutionSpace access MemorySpace.
+ *
+ * Invalid execution or memory space arguments yield false.
+ */
+template <class ExecutionSpace, class MemorySpace>
+struct is_accessible_mem_space
+    : Impl::is_accessible_mem_space_helper<std::remove_cv_t<ExecutionSpace>,
+                                           std::remove_cv_t<MemorySpace>> {};
+
+template <class ExecutionSpace, class MemorySpace>
+inline constexpr bool is_accessible_mem_space_v =
+    is_accessible_mem_space<ExecutionSpace, MemorySpace>::value;
 
 /**\brief  Can AccessSpace access MemorySpace ?
  *
