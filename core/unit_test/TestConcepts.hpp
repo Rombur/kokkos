@@ -14,6 +14,36 @@ using ExecutionSpace = TEST_EXECSPACE;
 using MemorySpace    = typename ExecutionSpace::memory_space;
 using DeviceType     = typename ExecutionSpace::device_type;
 
+// No access relationship is registered for this space, including on host-only
+// builds, so it exercises the inaccessible SpaceAccessibility::space branch.
+template <class ExecSpace>
+struct UnrelatedMemorySpace {
+  using memory_space    = UnrelatedMemorySpace;
+  using execution_space = ExecSpace;
+};
+
+template <class AccessSpace, class SrcMemorySpace>
+constexpr bool check_space_accessibility() {
+  using ExecSpace      = typename AccessSpace::execution_space;
+  using DstMemorySpace = typename AccessSpace::memory_space;
+  using Access = Kokkos::SpaceAccessibility<AccessSpace, SrcMemorySpace>;
+  constexpr bool accessible =
+      Kokkos::Impl::MemorySpaceAccess<typename ExecSpace::memory_space,
+                                      SrcMemorySpace>::accessible;
+  constexpr bool assignable =
+      Kokkos::is_memory_space_v<AccessSpace> &&
+      Kokkos::Impl::MemorySpaceAccess<DstMemorySpace,
+                                      SrcMemorySpace>::assignable;
+  using ExpectedSpace = std::conditional_t<
+      std::is_same_v<DstMemorySpace, SrcMemorySpace> || !accessible,
+      AccessSpace, Kokkos::Device<ExecSpace, SrcMemorySpace>>;
+
+  static_assert(Access::accessible == accessible);
+  static_assert(Access::assignable == assignable);
+  static_assert(std::is_same_v<typename Access::space, ExpectedSpace>);
+  return true;
+}
+
 template <class DstMemorySpace, class SrcMemorySpace>
 constexpr bool check_memory_space_traits() {
   using ExecSpace = typename DstMemorySpace::execution_space;
@@ -46,6 +76,17 @@ constexpr bool check_memory_space_traits() {
   static_assert(std::is_same_v<typename Kokkos::is_accessible_mem_space<
                                    ExecSpace, SrcMemorySpace>::type,
                                std::bool_constant<accessible>>);
+
+  static_assert(check_space_accessibility<ExecSpace, SrcMemorySpace>());
+  // Only instantiate SpaceAccessibility for valid execution/memory pairs.
+  if constexpr (Kokkos::Impl::MemorySpaceAccess<
+                    typename ExecSpace::memory_space,
+                    DstMemorySpace>::accessible) {
+    static_assert(check_space_accessibility<DstMemorySpace, SrcMemorySpace>());
+    static_assert(
+        check_space_accessibility<Kokkos::Device<ExecSpace, DstMemorySpace>,
+                                  SrcMemorySpace>());
+  }
   return true;
 }
 
@@ -63,6 +104,7 @@ constexpr bool check_memory_space_traits_matrix() {
 static_assert(
     check_memory_space_traits_matrix<
         MemorySpace, Kokkos::HostSpace, Kokkos::AnonymousSpace,
+        UnrelatedMemorySpace<ExecutionSpace>,
         typename ExecutionSpace::scratch_memory_space,
         typename Kokkos::DefaultHostExecutionSpace::scratch_memory_space
 #ifdef KOKKOS_ENABLE_CUDA

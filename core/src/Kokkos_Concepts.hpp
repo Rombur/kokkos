@@ -405,33 +405,23 @@ struct SpaceAccessibility {
 
   // The input AccessSpace may be a Device<ExecSpace,MemSpace>
   // verify that it is a valid combination of spaces.
-  static_assert(Kokkos::Impl::MemorySpaceAccess<
-                    typename AccessSpace::execution_space::memory_space,
-                    typename AccessSpace::memory_space>::accessible,
+  static_assert(is_accessible_mem_space_v<typename AccessSpace::execution_space,
+                                          typename AccessSpace::memory_space>,
                 "template argument #1 is an invalid space");
 
-  using exe_access = Kokkos::Impl::MemorySpaceAccess<
-      typename AccessSpace::execution_space::memory_space, MemorySpace>;
-
-  using mem_access =
-      Kokkos::Impl::MemorySpaceAccess<typename AccessSpace::memory_space,
-                                      MemorySpace>;
-
  public:
-  /**\brief  Can AccessSpace::execution_space access MemorySpace ?
-   *
-   *  Default based upon memory space accessibility.
-   *  Specialization required for other relationships.
-   */
-  enum { accessible = exe_access::accessible };
-
-  /**\brief  Can assign to AccessSpace from MemorySpace ?
-   *
-   *  Default based upon memory space accessibility.
-   *  Specialization required for other relationships.
-   */
+  /**\brief  Can AccessSpace::execution_space access MemorySpace ? */
   enum {
-    assignable = is_memory_space<AccessSpace>::value && mem_access::assignable
+    accessible =
+        is_accessible_mem_space_v<typename AccessSpace::execution_space,
+                                  MemorySpace>
+  };
+
+  /**\brief  Can assign to AccessSpace from MemorySpace ? */
+  enum {
+    assignable = is_memory_space<AccessSpace>::value &&
+                 is_assignable_mem_space_v<typename AccessSpace::memory_space,
+                                           MemorySpace>
   };
 
   /**\brief  Can deep copy to AccessSpace::memory_Space from MemorySpace ?  */
@@ -452,7 +442,7 @@ struct SpaceAccessibility {
   // else construct a device with execution space and memory space.
   using space = std::conditional_t<
       std::is_same_v<typename AccessSpace::memory_space, MemorySpace> ||
-          !exe_access::accessible,
+          !accessible,
       AccessSpace,
       Kokkos::Device<typename AccessSpace::execution_space, MemorySpace>>;
 };
