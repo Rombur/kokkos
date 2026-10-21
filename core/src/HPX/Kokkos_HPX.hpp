@@ -463,6 +463,22 @@ struct DeviceTypeTraits<Kokkos::Experimental::HPX> {
 namespace Kokkos {
 namespace Impl {
 template <>
+struct is_accessible_mem_space_helper<Kokkos::Experimental::HPX, HostSpace,
+                                      true> : std::true_type {};
+
+// Host execution spaces sharing HostSpace can access each other's scratch.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<
+    ExecutionSpace, Kokkos::Experimental::HPX::scratch_memory_space, true>
+    : std::bool_constant<
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
+template <>
+struct is_assignable_mem_space_helper<
+    HostSpace, Kokkos::Experimental::HPX::scratch_memory_space, true>
+    : std::false_type {};
+
+template <>
 struct MemorySpaceAccess<Kokkos::Experimental::HPX::memory_space,
                          Kokkos::Experimental::HPX::scratch_memory_space> {
   enum : bool { assignable = false };

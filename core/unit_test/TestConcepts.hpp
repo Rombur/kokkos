@@ -107,6 +107,22 @@ static_assert(
         UnrelatedMemorySpace<ExecutionSpace>,
         typename ExecutionSpace::scratch_memory_space,
         typename Kokkos::DefaultHostExecutionSpace::scratch_memory_space
+#ifdef KOKKOS_ENABLE_SERIAL
+        ,
+        Kokkos::Serial::scratch_memory_space
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+        ,
+        Kokkos::OpenMP::scratch_memory_space
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+        ,
+        Kokkos::Threads::scratch_memory_space
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+        ,
+        Kokkos::Experimental::HPX::scratch_memory_space
+#endif
 #ifdef KOKKOS_ENABLE_CUDA
         ,
         Kokkos::CudaSpace, Kokkos::CudaUVMSpace, Kokkos::CudaHostPinnedSpace
@@ -121,6 +137,54 @@ static_assert(
         Kokkos::SYCLHostUSMSpace
 #endif
         >());
+
+template <class HostExecutionSpace>
+constexpr bool check_host_memory_space_traits() {
+  using ScratchSpace = typename HostExecutionSpace::scratch_memory_space;
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<HostExecutionSpace, Kokkos::HostSpace>);
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<HostExecutionSpace, ScratchSpace>);
+  static_assert(Kokkos::is_assignable_mem_space_v<ScratchSpace, ScratchSpace>);
+  static_assert(
+      !Kokkos::is_assignable_mem_space_v<Kokkos::HostSpace, ScratchSpace>);
+  static_assert(
+      !Kokkos::is_assignable_mem_space_v<ScratchSpace, Kokkos::HostSpace>);
+  return true;
+}
+
+#ifdef KOKKOS_ENABLE_SERIAL
+static_assert(check_host_memory_space_traits<Kokkos::Serial>());
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+static_assert(check_host_memory_space_traits<Kokkos::OpenMP>());
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+static_assert(check_host_memory_space_traits<Kokkos::Threads>());
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+static_assert(check_host_memory_space_traits<Kokkos::Experimental::HPX>());
+#endif
+
+static_assert(
+    Kokkos::is_assignable_mem_space_v<Kokkos::HostSpace, Kokkos::HostSpace>);
+static_assert(
+    Kokkos::is_assignable_mem_space_v<MemorySpace, Kokkos::AnonymousSpace>);
+static_assert(
+    Kokkos::is_assignable_mem_space_v<Kokkos::AnonymousSpace, MemorySpace>);
+
+// AnonymousSpace is permissive only when the other argument is a valid space.
+static_assert(!Kokkos::is_assignable_mem_space_v<Kokkos::AnonymousSpace, void>);
+static_assert(!Kokkos::is_assignable_mem_space_v<int, Kokkos::AnonymousSpace>);
+static_assert(
+    !Kokkos::is_assignable_mem_space_v<Kokkos::AnonymousSpace, MemorySpace &>);
+static_assert(
+    !Kokkos::is_assignable_mem_space_v<MemorySpace &, Kokkos::AnonymousSpace>);
+static_assert(!Kokkos::is_accessible_mem_space_v<void, Kokkos::AnonymousSpace>);
+static_assert(
+    !Kokkos::is_accessible_mem_space_v<MemorySpace, Kokkos::AnonymousSpace>);
+static_assert(!Kokkos::is_accessible_mem_space_v<ExecutionSpace &,
+                                                 Kokkos::AnonymousSpace>);
 
 static_assert(Kokkos::is_assignable_mem_space_v<MemorySpace, MemorySpace>);
 static_assert(Kokkos::is_accessible_mem_space_v<ExecutionSpace, MemorySpace>);

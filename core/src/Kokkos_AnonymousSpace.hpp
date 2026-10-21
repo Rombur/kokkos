@@ -43,6 +43,22 @@ namespace Kokkos {
 
 namespace Impl {
 
+template <class OtherSpace>
+struct is_assignable_mem_space_helper<AnonymousSpace, OtherSpace, true>
+    : std::true_type {};
+
+template <class OtherSpace>
+struct is_assignable_mem_space_helper<OtherSpace, AnonymousSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<AnonymousSpace, AnonymousSpace, true>
+    : std::true_type {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, AnonymousSpace, true>
+    : std::true_type {};
+
 template <typename OtherSpace>
 struct MemorySpaceAccess<Kokkos::AnonymousSpace, OtherSpace> {
   enum : bool { assignable = true };

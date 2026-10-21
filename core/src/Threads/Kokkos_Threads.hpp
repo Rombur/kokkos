@@ -145,6 +145,22 @@ namespace Kokkos {
 namespace Impl {
 
 template <>
+struct is_accessible_mem_space_helper<Kokkos::Threads, HostSpace, true>
+    : std::true_type {};
+
+// Host execution spaces sharing HostSpace can access each other's scratch.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<
+    ExecutionSpace, Kokkos::Threads::scratch_memory_space, true>
+    : std::bool_constant<
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
+template <>
+struct is_assignable_mem_space_helper<
+    HostSpace, Kokkos::Threads::scratch_memory_space, true> : std::false_type {
+};
+
+template <>
 struct MemorySpaceAccess<Kokkos::Threads::memory_space,
                          Kokkos::Threads::scratch_memory_space> {
   enum : bool { assignable = false };

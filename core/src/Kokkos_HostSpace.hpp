@@ -114,6 +114,10 @@ namespace Kokkos {
 
 namespace Impl {
 
+template <>
+struct is_assignable_mem_space_helper<HostSpace, HostSpace, true>
+    : std::true_type {};
+
 static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                               Kokkos::HostSpace>::assignable);
 
