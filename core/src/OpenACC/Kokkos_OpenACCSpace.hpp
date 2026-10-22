@@ -109,6 +109,9 @@ struct is_accessible_mem_space_helper<ExecutionSpace,
 
 }  // namespace Kokkos::Impl
 
+/*--------------------------------------------------------------------------*/
+
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                        Kokkos::Experimental::OpenACCSpace> {
@@ -139,6 +142,5 @@ struct Kokkos::Impl::MemorySpaceAccess<Kokkos::Experimental::OpenACCSpace,
   enum : bool { assignable = true };
   enum : bool { accessible = true };
 };
-/*--------------------------------------------------------------------------*/
-
+#endif
 #endif

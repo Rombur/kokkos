@@ -85,6 +85,7 @@ TEST(sycl, memory_space_traits) {
 }
 
 TEST(sycl, space_access) {
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                                 Kokkos::HostSpace>::assignable);
 
@@ -195,6 +196,8 @@ TEST(sycl, space_access) {
 
   //--------------------------------------
 
+#endif
+
   static_assert(
       !Kokkos::SpaceAccessibility<Kokkos::SYCL, Kokkos::HostSpace>::accessible);
 
@@ -222,12 +225,15 @@ TEST(sycl, space_access) {
       Kokkos::SpaceAccessibility<Kokkos::HostSpace,
                                  Kokkos::SYCLHostUSMSpace>::accessible);
 
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::SYCLHostUSMSpace,
                                                 Kokkos::HostSpace>::accessible);
 
   static_assert(
       Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                       Kokkos::SYCLHostUSMSpace>::accessible);
+
+#endif
 
   static_assert(std::is_same_v<
                 Kokkos::Impl::HostMirror<Kokkos::SYCLDeviceUSMSpace>::Space,

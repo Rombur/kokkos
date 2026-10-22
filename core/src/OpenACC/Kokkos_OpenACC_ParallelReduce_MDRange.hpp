@@ -47,9 +47,9 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
       : m_functor_reducer(functor_reducer),
         m_policy(policy),
         m_result_ptr(result.data()),
-        m_result_ptr_on_device(
-            MemorySpaceAccess<Kokkos::Experimental::OpenACCSpace,
-                              typename ViewType::memory_space>::accessible) {}
+        m_result_ptr_on_device(Kokkos::is_accessible_mem_space_v<
+                               Kokkos::Experimental::OpenACC,
+                               typename ViewType::memory_space>) {}
 
   void execute() const {
     static_assert(0 < Policy::rank && Policy::rank < 7);

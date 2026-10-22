@@ -378,11 +378,11 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
         m_policy(arg_policy),
         m_result_ptr(arg_result.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<Kokkos::CudaSpace,
-                              typename ViewType::memory_space>::accessible),
+            Kokkos::is_accessible_mem_space_v<Kokkos::Cuda,
+                                              typename ViewType::memory_space>),
         m_result_ptr_host_accessible(
-            MemorySpaceAccess<Kokkos::HostSpace,
-                              typename ViewType::memory_space>::accessible),
+            Kokkos::is_accessible_mem_space_v<Kokkos::DefaultHostExecutionSpace,
+                                              typename ViewType::memory_space>),
         m_scratch_space(nullptr),
         m_scratch_flags(nullptr),
         m_unified_space(nullptr) {
@@ -1071,8 +1071,8 @@ class ParallelScanWithTotal<FunctorType, Kokkos::RangePolicy<Traits...>,
         m_final(false),
         m_result_ptr(arg_result_view.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<Kokkos::CudaSpace,
-                              typename ViewType::memory_space>::accessible)
+            Kokkos::is_accessible_mem_space_v<Kokkos::Cuda,
+                                              typename ViewType::memory_space>)
 #ifdef KOKKOS_IMPL_DEBUG_CUDA_SERIAL_EXECUTION
         ,
         m_run_serial(Kokkos::Impl::CudaInternal::cuda_use_serial_execution())

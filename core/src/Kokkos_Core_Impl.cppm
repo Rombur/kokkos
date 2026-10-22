@@ -14,7 +14,9 @@ export {
   namespace Impl {
   using ::Kokkos::Impl::ExecutionSpaceTag;
   using ::Kokkos::Impl::make_shared_allocation_record;
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   using ::Kokkos::Impl::MemorySpaceAccess;
+#endif
   }  // namespace Impl
 
   // View-related

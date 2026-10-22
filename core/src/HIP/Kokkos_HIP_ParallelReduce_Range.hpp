@@ -328,11 +328,11 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
         m_policy(arg_policy),
         m_result_ptr(arg_result.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<HIPSpace,
-                              typename ViewType::memory_space>::accessible),
-        m_result_ptr_host_accessible(
-            MemorySpaceAccess<Kokkos::HostSpace,
-                              typename ViewType::memory_space>::accessible) {}
+            Kokkos::is_accessible_mem_space_v<Kokkos::HIP,
+                                              typename ViewType::memory_space>),
+        m_result_ptr_host_accessible(Kokkos::is_accessible_mem_space_v<
+                                     Kokkos::DefaultHostExecutionSpace,
+                                     typename ViewType::memory_space>) {}
 };
 
 }  // namespace Impl

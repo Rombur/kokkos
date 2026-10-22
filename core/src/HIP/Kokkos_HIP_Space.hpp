@@ -384,10 +384,7 @@ struct is_accessible_mem_space_helper<ExecutionSpace, HIPHostPinnedSpace, true>
           std::is_same_v<ExecutionSpace, HIP> ||
           std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
 
-static_assert(Kokkos::Impl::MemorySpaceAccess<HIPSpace, HIPSpace>::assignable);
-
-//----------------------------------------
-
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct MemorySpaceAccess<HostSpace, HIPSpace> {
   enum : bool { assignable = false };
@@ -477,6 +474,9 @@ struct MemorySpaceAccess<HIPManagedSpace, HIPHostPinnedSpace> {
   enum : bool { assignable = false };  // different exec_space
   enum : bool { accessible = true };
 };
+#endif
+
+static_assert(Kokkos::is_assignable_mem_space_v<HIPSpace, HIPSpace>);
 
 }  // namespace Impl
 }  // namespace Kokkos

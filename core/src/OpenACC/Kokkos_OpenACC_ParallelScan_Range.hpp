@@ -293,9 +293,9 @@ class Kokkos::Impl::ParallelScanWithTotal<
                         const typename base_t::Policy& arg_policy,
                         const ViewType& arg_result_view)
       : base_t(arg_functor, arg_policy, arg_result_view.data(),
-               MemorySpaceAccess<Kokkos::Experimental::OpenACCSpace,
-                                 typename ViewType::memory_space>::accessible) {
-  }
+               Kokkos::is_accessible_mem_space_v<
+                   Kokkos::Experimental::OpenACC,
+                   typename ViewType::memory_space>) {}
 };
 
 #undef KOKKOS_IMPL_ACC_ACCESS_ELEMENTS

@@ -297,6 +297,67 @@ struct is_space {
 namespace Kokkos {
 namespace Impl {
 
+template <class DstMemorySpace, class SrcMemorySpace,
+          bool = is_memory_space<DstMemorySpace>::value &&
+                 is_memory_space<SrcMemorySpace>::value>
+struct is_assignable_mem_space_helper : std::false_type {};
+
+template <class DstMemorySpace, class SrcMemorySpace>
+struct is_assignable_mem_space_helper<DstMemorySpace, SrcMemorySpace, true>
+    : std::is_same<DstMemorySpace, SrcMemorySpace> {};
+
+template <class ExecutionSpace, class MemorySpace,
+          bool = is_execution_space<ExecutionSpace>::value &&
+                 is_memory_space<MemorySpace>::value>
+struct is_accessible_mem_space_helper : std::false_type {};
+
+template <class ExecutionSpace, class MemorySpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, MemorySpace, true>
+    : std::is_same<typename ExecutionSpace::memory_space, MemorySpace> {};
+
+}  // namespace Impl
+}  // namespace Kokkos
+
+namespace Kokkos {
+
+/**\brief Can a View or pointer to SrcMemorySpace be assigned to one marked
+ *        DstMemorySpace.
+ *
+ * Invalid memory space arguments yield false.
+ */
+template <class DstMemorySpace, class SrcMemorySpace>
+struct is_assignable_mem_space
+    : std::conditional_t<
+          std::is_same_v<DstMemorySpace, std::remove_cv_t<DstMemorySpace>> &&
+              std::is_same_v<SrcMemorySpace, std::remove_cv_t<SrcMemorySpace>>,
+          Impl::is_assignable_mem_space_helper<DstMemorySpace, SrcMemorySpace>,
+          is_assignable_mem_space<std::remove_cv_t<DstMemorySpace>,
+                                  std::remove_cv_t<SrcMemorySpace>>> {};
+
+template <class DstMemorySpace, class SrcMemorySpace>
+inline constexpr bool is_assignable_mem_space_v =
+    is_assignable_mem_space<DstMemorySpace, SrcMemorySpace>::value;
+
+/**\brief Can ExecutionSpace access MemorySpace.
+ *
+ * Invalid execution or memory space arguments yield false.
+ */
+template <class ExecutionSpace, class MemorySpace>
+struct is_accessible_mem_space
+    : std::conditional_t<
+          std::is_same_v<ExecutionSpace, std::remove_cv_t<ExecutionSpace>> &&
+              std::is_same_v<MemorySpace, std::remove_cv_t<MemorySpace>>,
+          Impl::is_accessible_mem_space_helper<ExecutionSpace, MemorySpace>,
+          is_accessible_mem_space<std::remove_cv_t<ExecutionSpace>,
+                                  std::remove_cv_t<MemorySpace>>> {};
+
+template <class ExecutionSpace, class MemorySpace>
+inline constexpr bool is_accessible_mem_space_v =
+    is_accessible_mem_space<ExecutionSpace, MemorySpace>::value;
+
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
+namespace Impl {
+
 /**\brief  Access relationship between DstMemorySpace and SrcMemorySpace
  *
  *  The default case can assume accessibility for the same space.
@@ -323,57 +384,8 @@ struct MemorySpaceAccess {
   enum { accessible = assignable };
 };
 
-template <class DstMemorySpace, class SrcMemorySpace,
-          bool = is_memory_space<DstMemorySpace>::value &&
-                 is_memory_space<SrcMemorySpace>::value>
-struct is_assignable_mem_space_helper : std::false_type {};
-
-template <class DstMemorySpace, class SrcMemorySpace>
-struct is_assignable_mem_space_helper<DstMemorySpace, SrcMemorySpace, true>
-    : std::bool_constant<
-          MemorySpaceAccess<DstMemorySpace, SrcMemorySpace>::assignable> {};
-
-template <class ExecutionSpace, class MemorySpace,
-          bool = is_execution_space<ExecutionSpace>::value &&
-                 is_memory_space<MemorySpace>::value>
-struct is_accessible_mem_space_helper : std::false_type {};
-
-template <class ExecutionSpace, class MemorySpace>
-struct is_accessible_mem_space_helper<ExecutionSpace, MemorySpace, true>
-    : std::bool_constant<MemorySpaceAccess<
-          typename ExecutionSpace::memory_space, MemorySpace>::accessible> {};
-
 }  // namespace Impl
-}  // namespace Kokkos
-
-namespace Kokkos {
-
-/**\brief Can a View or pointer to SrcMemorySpace be assigned to one marked
- *        DstMemorySpace.
- *
- * Invalid memory space arguments yield false.
- */
-template <class DstMemorySpace, class SrcMemorySpace>
-struct is_assignable_mem_space
-    : Impl::is_assignable_mem_space_helper<std::remove_cv_t<DstMemorySpace>,
-                                           std::remove_cv_t<SrcMemorySpace>> {};
-
-template <class DstMemorySpace, class SrcMemorySpace>
-inline constexpr bool is_assignable_mem_space_v =
-    is_assignable_mem_space<DstMemorySpace, SrcMemorySpace>::value;
-
-/**\brief Can ExecutionSpace access MemorySpace.
- *
- * Invalid execution or memory space arguments yield false.
- */
-template <class ExecutionSpace, class MemorySpace>
-struct is_accessible_mem_space
-    : Impl::is_accessible_mem_space_helper<std::remove_cv_t<ExecutionSpace>,
-                                           std::remove_cv_t<MemorySpace>> {};
-
-template <class ExecutionSpace, class MemorySpace>
-inline constexpr bool is_accessible_mem_space_v =
-    is_accessible_mem_space<ExecutionSpace, MemorySpace>::value;
+#endif
 
 /**\brief  Can AccessSpace access MemorySpace ?
  *

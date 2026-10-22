@@ -417,16 +417,7 @@ struct is_accessible_mem_space_helper<ExecutionSpace, CudaHostPinnedSpace, true>
           std::is_same_v<ExecutionSpace, Cuda> ||
           std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
 
-static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::CudaSpace,
-                                              Kokkos::CudaSpace>::assignable);
-static_assert(Kokkos::Impl::MemorySpaceAccess<
-              Kokkos::CudaUVMSpace, Kokkos::CudaUVMSpace>::assignable);
-static_assert(
-    Kokkos::Impl::MemorySpaceAccess<Kokkos::CudaHostPinnedSpace,
-                                    Kokkos::CudaHostPinnedSpace>::assignable);
-
-//----------------------------------------
-
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct MemorySpaceAccess<Kokkos::HostSpace, Kokkos::CudaSpace> {
   enum : bool { assignable = false };
@@ -521,8 +512,14 @@ struct MemorySpaceAccess<Kokkos::CudaHostPinnedSpace, Kokkos::CudaUVMSpace> {
   enum : bool { assignable = false };  // different execution_space
   enum : bool { accessible = true };   // same accessibility
 };
+#endif
 
-//----------------------------------------
+static_assert(
+    Kokkos::is_assignable_mem_space_v<Kokkos::CudaSpace, Kokkos::CudaSpace>);
+static_assert(Kokkos::is_assignable_mem_space_v<Kokkos::CudaUVMSpace,
+                                                Kokkos::CudaUVMSpace>);
+static_assert(Kokkos::is_assignable_mem_space_v<Kokkos::CudaHostPinnedSpace,
+                                                Kokkos::CudaHostPinnedSpace>);
 
 }  // namespace Impl
 }  // namespace Kokkos

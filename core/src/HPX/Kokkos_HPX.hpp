@@ -478,12 +478,14 @@ struct is_assignable_mem_space_helper<
     HostSpace, Kokkos::Experimental::HPX::scratch_memory_space, true>
     : std::false_type {};
 
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct MemorySpaceAccess<Kokkos::Experimental::HPX::memory_space,
                          Kokkos::Experimental::HPX::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };
 };
+#endif
 
 template <>
 struct ZeroMemset<Kokkos::Experimental::HPX> {
@@ -1137,8 +1139,8 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
         m_policy(arg_policy),
         m_result_ptr(arg_view.data()) {
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::Experimental::HPX,
+                                          typename ViewType::memory_space>,
         "HPX reduce result must be a View accessible from HostSpace");
   }
 };
@@ -1231,8 +1233,8 @@ class ParallelReduce<CombinedFunctorReducerType,
                      .set_chunk_size(1)),
         m_result_ptr(arg_view.data()) {
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::Experimental::HPX,
+                                          typename ViewType::memory_space>,
         "HPX reduce result must be a View accessible from HostSpace");
   }
 
@@ -1465,8 +1467,8 @@ class ParallelScanWithTotal<FunctorType, Kokkos::RangePolicy<Traits...>,
         m_policy(arg_policy),
         m_result_ptr(arg_result_view.data()) {
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::Experimental::HPX,
+                                          typename ViewType::memory_space>,
         "Kokkos::HPX parallel_scan result must be host-accessible!");
   }
 };
@@ -1684,8 +1686,8 @@ class ParallelReduce<CombinedFunctorReducerType,
                  FunctorTeamShmemSize<FunctorType>::value(
                      m_functor_reducer.get_functor(), arg_policy.team_size())) {
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::Experimental::HPX,
+                                          typename ViewType::memory_space>,
         "HPX reduce result must be a View accessible from HostSpace");
     if ((arg_policy.scratch_size(0) +
          FunctorTeamShmemSize<FunctorType>::value(

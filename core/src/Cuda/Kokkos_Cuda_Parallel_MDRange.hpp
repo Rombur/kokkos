@@ -479,8 +479,8 @@ class ParallelReduce<CombinedFunctorReducerType,
         m_policy(arg_policy),
         m_result_ptr(arg_result.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<Kokkos::CudaSpace,
-                              typename ViewType::memory_space>::accessible),
+            Kokkos::is_accessible_mem_space_v<Kokkos::Cuda,
+                                              typename ViewType::memory_space>),
         m_scratch_space(nullptr),
         m_scratch_flags(nullptr),
         m_unified_space(nullptr) {

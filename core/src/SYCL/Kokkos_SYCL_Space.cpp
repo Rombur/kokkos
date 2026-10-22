@@ -7,6 +7,7 @@
 
 #include <Kokkos_Macros.hpp>
 
+#include <Kokkos_Core.hpp>
 #include <Kokkos_HostSpace.hpp>
 #include <SYCL/Kokkos_SYCL.hpp>
 #include <SYCL/Kokkos_SYCL_Space.hpp>

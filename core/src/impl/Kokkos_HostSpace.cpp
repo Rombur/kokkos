@@ -7,6 +7,7 @@
 
 #include <Kokkos_Macros.hpp>
 
+#include <Kokkos_Core.hpp>
 #include <Kokkos_Atomic.hpp>
 #include <Kokkos_BitManipulation.hpp>
 #include <Kokkos_HostSpace.hpp>

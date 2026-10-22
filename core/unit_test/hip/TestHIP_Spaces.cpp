@@ -99,6 +99,7 @@ __global__ void test_hip_spaces_int_value(int *ptr) {
 }
 
 TEST(hip, space_access) {
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                                 Kokkos::HostSpace>::assignable);
 
@@ -210,6 +211,8 @@ TEST(hip, space_access) {
                                       Kokkos::HIPHostPinnedSpace>::accessible);
 
   //--------------------------------------
+
+#endif
 
   static_assert(
       !Kokkos::SpaceAccessibility<Kokkos::HIP, Kokkos::HostSpace>::accessible);

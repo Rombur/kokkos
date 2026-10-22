@@ -102,9 +102,9 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
       : m_functor_reducer(arg_functor_reducer),
         m_policy(arg_policy),
         m_result_ptr(arg_result_view.data()),
-        m_result_ptr_on_device(
-            MemorySpaceAccess<Kokkos::Experimental::OpenACCSpace,
-                              typename ViewType::memory_space>::accessible) {}
+        m_result_ptr_on_device(Kokkos::is_accessible_mem_space_v<
+                               Kokkos::Experimental::OpenACC,
+                               typename ViewType::memory_space>) {}
 };
 
 namespace Kokkos {

@@ -456,9 +456,10 @@ class Kokkos::Impl::ParallelScanWithTotal<
   ParallelScanWithTotal(const FunctorType& arg_functor,
                         const typename Base::Policy& arg_policy,
                         const ViewType& arg_result_view)
-      : Base(arg_functor, arg_policy, arg_result_view.data(),
-             MemorySpaceAccess<SYCLDeviceUSMSpace,
-                               typename ViewType::memory_space>::accessible),
+      : Base(
+            arg_functor, arg_policy, arg_result_view.data(),
+            Kokkos::is_accessible_mem_space_v<Kokkos::SYCL,
+                                              typename ViewType::memory_space>),
         m_exec(arg_policy.space()) {}
 };
 

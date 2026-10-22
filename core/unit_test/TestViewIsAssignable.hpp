@@ -112,11 +112,11 @@ TEST(TEST_CATEGORY, view_is_assignable) {
                           View<int**, left, d_exec>>::test(true, true, 10, 2);
 
   // Space Assignment
-  bool expected = Kokkos::Impl::MemorySpaceAccess<d_exec, h_exec>::assignable;
+  bool expected = Kokkos::is_assignable_mem_space_v<d_exec, h_exec>;
   Impl::TestAssignability<View<int*, left, d_exec>,
                           View<int*, left, h_exec>>::test(expected, expected,
                                                           10);
-  expected = Kokkos::Impl::MemorySpaceAccess<h_exec, d_exec>::assignable;
+  expected = Kokkos::is_assignable_mem_space_v<h_exec, d_exec>;
   Impl::TestAssignability<View<int*, left, h_exec>,
                           View<int*, left, d_exec>>::test(expected, expected,
                                                           10);

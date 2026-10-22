@@ -114,10 +114,7 @@ struct is_accessible_mem_space_helper<
           std::is_same_v<ExecutionSpace, Experimental::NextSilicon> ||
           std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
 
-static_assert(Kokkos::Impl::MemorySpaceAccess<
-              Experimental::NextSiliconSharedSpace,
-              Experimental::NextSiliconSharedSpace>::assignable);
-
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct MemorySpaceAccess<Kokkos::Experimental::NextSiliconSharedSpace,
                          Kokkos::HostSpace> {
@@ -138,6 +135,11 @@ struct MemorySpaceAccess<Kokkos::HostSpace,
   };  // Unlike <NextSiliconSharedSpace, HostSpace>, this is true so that
       // HostMirror uses NextSiliconSharedSpace as the memory space
 };
+#endif
+
+static_assert(
+    Kokkos::is_assignable_mem_space_v<Experimental::NextSiliconSharedSpace,
+                                      Experimental::NextSiliconSharedSpace>);
 
 }  // namespace Impl
 }  // namespace Kokkos

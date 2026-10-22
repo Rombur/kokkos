@@ -28,12 +28,10 @@ constexpr bool check_space_accessibility() {
   using DstMemorySpace = typename AccessSpace::memory_space;
   using Access = Kokkos::SpaceAccessibility<AccessSpace, SrcMemorySpace>;
   constexpr bool accessible =
-      Kokkos::Impl::MemorySpaceAccess<typename ExecSpace::memory_space,
-                                      SrcMemorySpace>::accessible;
+      Kokkos::is_accessible_mem_space_v<ExecSpace, SrcMemorySpace>;
   constexpr bool assignable =
       Kokkos::is_memory_space_v<AccessSpace> &&
-      Kokkos::Impl::MemorySpaceAccess<DstMemorySpace,
-                                      SrcMemorySpace>::assignable;
+      Kokkos::is_assignable_mem_space_v<DstMemorySpace, SrcMemorySpace>;
   using ExpectedSpace = std::conditional_t<
       std::is_same_v<DstMemorySpace, SrcMemorySpace> || !accessible,
       AccessSpace, Kokkos::Device<ExecSpace, SrcMemorySpace>>;
@@ -48,11 +46,19 @@ template <class DstMemorySpace, class SrcMemorySpace>
 constexpr bool check_memory_space_traits() {
   using ExecSpace = typename DstMemorySpace::execution_space;
   constexpr bool assignable =
-      Kokkos::Impl::MemorySpaceAccess<DstMemorySpace,
-                                      SrcMemorySpace>::assignable;
+      Kokkos::is_assignable_mem_space_v<DstMemorySpace, SrcMemorySpace>;
   constexpr bool accessible =
+      Kokkos::is_accessible_mem_space_v<ExecSpace, SrcMemorySpace>;
+
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
+  static_assert(assignable ==
+                Kokkos::Impl::MemorySpaceAccess<DstMemorySpace,
+                                                SrcMemorySpace>::assignable);
+  static_assert(
+      accessible ==
       Kokkos::Impl::MemorySpaceAccess<typename ExecSpace::memory_space,
-                                      SrcMemorySpace>::accessible;
+                                      SrcMemorySpace>::accessible);
+#endif
 
   static_assert(
       Kokkos::is_assignable_mem_space<DstMemorySpace, SrcMemorySpace>{} ==
@@ -79,9 +85,7 @@ constexpr bool check_memory_space_traits() {
 
   static_assert(check_space_accessibility<ExecSpace, SrcMemorySpace>());
   // Only instantiate SpaceAccessibility for valid execution/memory pairs.
-  if constexpr (Kokkos::Impl::MemorySpaceAccess<
-                    typename ExecSpace::memory_space,
-                    DstMemorySpace>::accessible) {
+  if constexpr (Kokkos::is_accessible_mem_space_v<ExecSpace, DstMemorySpace>) {
     static_assert(check_space_accessibility<DstMemorySpace, SrcMemorySpace>());
     static_assert(
         check_space_accessibility<Kokkos::Device<ExecSpace, DstMemorySpace>,
@@ -197,6 +201,41 @@ static_assert(
     !Kokkos::is_accessible_mem_space_v<MemorySpace, Kokkos::AnonymousSpace>);
 static_assert(!Kokkos::is_accessible_mem_space_v<ExecutionSpace &,
                                                  Kokkos::AnonymousSpace>);
+
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
+template <class NonDefaultMemorySpace>
+constexpr bool check_legacy_nondefault_memory_access() {
+  using ExecSpace = typename NonDefaultMemorySpace::execution_space;
+  using Scratch   = typename ExecSpace::scratch_memory_space;
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecSpace, Scratch>);
+  static_assert(!Kokkos::Impl::MemorySpaceAccess<NonDefaultMemorySpace,
+                                                 Scratch>::accessible);
+  static_assert(
+      !Kokkos::Impl::MemorySpaceAccess<
+          NonDefaultMemorySpace, UnrelatedMemorySpace<ExecSpace>>::accessible);
+  static_assert(
+      Kokkos::Impl::MemorySpaceAccess<NonDefaultMemorySpace,
+                                      NonDefaultMemorySpace>::accessible);
+  return true;
+}
+
+#ifdef KOKKOS_ENABLE_CUDA
+static_assert(check_legacy_nondefault_memory_access<Kokkos::CudaUVMSpace>());
+static_assert(
+    check_legacy_nondefault_memory_access<Kokkos::CudaHostPinnedSpace>());
+#endif
+#ifdef KOKKOS_ENABLE_HIP
+static_assert(check_legacy_nondefault_memory_access<Kokkos::HIPManagedSpace>());
+static_assert(
+    check_legacy_nondefault_memory_access<Kokkos::HIPHostPinnedSpace>());
+#endif
+#ifdef KOKKOS_ENABLE_SYCL
+static_assert(
+    check_legacy_nondefault_memory_access<Kokkos::SYCLSharedUSMSpace>());
+static_assert(
+    check_legacy_nondefault_memory_access<Kokkos::SYCLHostUSMSpace>());
+#endif
+#endif
 
 #ifdef KOKKOS_ENABLE_OPENACC
 template <class ExecSpace>

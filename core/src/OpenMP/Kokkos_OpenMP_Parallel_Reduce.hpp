@@ -160,8 +160,8 @@ class ParallelReduce<CombinedFunctorReducerType, Kokkos::RangePolicy<Traits...>,
         m_result_ptr(arg_view.data()) {
     m_instance = arg_policy.space().impl_internal_space_instance();
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::OpenMP,
+                                          typename ViewType::memory_space>,
         "Kokkos::OpenMP reduce result must be a View accessible from "
         "HostSpace");
   }
@@ -298,8 +298,8 @@ class ParallelReduce<CombinedFunctorReducerType,
         m_result_ptr(arg_view.data()) {
     m_instance = arg_policy.space().impl_internal_space_instance();
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::OpenMP,
+                                          typename ViewType::memory_space>,
         "Kokkos::OpenMP reduce result must be a View accessible from "
         "HostSpace");
   }
@@ -512,8 +512,8 @@ class ParallelReduce<CombinedFunctorReducerType,
     m_instance = arg_policy.space().impl_internal_space_instance();
 
     static_assert(
-        Kokkos::Impl::MemorySpaceAccess<
-            Kokkos::HostSpace, typename ViewType::memory_space>::accessible,
+        Kokkos::is_accessible_mem_space_v<Kokkos::OpenMP,
+                                          typename ViewType::memory_space>,
         "Kokkos::OpenMP reduce result must be a View accessible from "
         "HostSpace");
 

@@ -54,7 +54,7 @@ struct SpaceAwareAccessor {
   template <
       class OtherMemorySpace, class OtherNestedAccessorType,
       std::enable_if_t<
-          MemorySpaceAccess<MemorySpace, OtherMemorySpace>::assignable &&
+          Kokkos::is_assignable_mem_space_v<MemorySpace, OtherMemorySpace> &&
               std::is_constructible_v<NestedAccessor, OtherNestedAccessorType>,
           int> = 0>
   KOKKOS_FUNCTION constexpr SpaceAwareAccessor(

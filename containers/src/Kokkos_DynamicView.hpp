@@ -47,9 +47,8 @@ struct ChunkedArrayManager {
         m_chunks((ValueType**)(rhs.m_chunks)),
         m_track(rhs.m_track),
         m_chunk_size(rhs.m_chunk_size) {
-    static_assert(
-        Kokkos::Impl::MemorySpaceAccess<MemorySpace, Space>::assignable,
-        "Incompatible ChunkedArrayManager copy construction");
+    static_assert(Kokkos::is_assignable_mem_space_v<MemorySpace, Space>,
+                  "Incompatible ChunkedArrayManager copy construction");
   }
 
   ChunkedArrayManager(const unsigned arg_chunk_max,
@@ -74,13 +73,15 @@ struct ChunkedArrayManager {
 
   template <typename Space>
   struct IsAccessibleFrom<
-      Space, typename std::enable_if_t<Kokkos::Impl::MemorySpaceAccess<
-                 MemorySpace, Space>::accessible>> : std::true_type {};
+      Space, typename std::enable_if_t<Kokkos::is_accessible_mem_space_v<
+                 typename MemorySpace::execution_space, Space>>>
+      : std::true_type {};
 
   template <typename Space>
   struct IsAccessibleFrom<
-      Space, typename std::enable_if_t<!Kokkos::Impl::MemorySpaceAccess<
-                 MemorySpace, Space>::accessible>> : std::false_type {};
+      Space, typename std::enable_if_t<!Kokkos::is_accessible_mem_space_v<
+                 typename MemorySpace::execution_space, Space>>>
+      : std::false_type {};
 
   template <typename Space>
   static ChunkedArrayManager<Space, ValueType> create_mirror(

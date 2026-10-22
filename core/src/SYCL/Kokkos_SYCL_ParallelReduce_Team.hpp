@@ -429,8 +429,8 @@ class Kokkos::Impl::ParallelReduce<CombinedFunctorReducerType,
         m_policy(arg_policy),
         m_result_ptr(arg_result.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<Kokkos::SYCLDeviceUSMSpace,
-                              typename ViewType::memory_space>::accessible),
+            Kokkos::is_accessible_mem_space_v<Kokkos::SYCL,
+                                              typename ViewType::memory_space>),
         m_league_size(arg_policy.league_size()),
         m_team_size(arg_policy.team_size()),
         m_vector_size(arg_policy.impl_vector_length()) {

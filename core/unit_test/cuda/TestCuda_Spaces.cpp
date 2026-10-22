@@ -100,6 +100,7 @@ __global__ void test_cuda_spaces_int_value(int *ptr) {
 }
 
 TEST(cuda, space_access) {
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
   static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                                 Kokkos::HostSpace>::assignable);
 
@@ -210,6 +211,8 @@ TEST(cuda, space_access) {
                                       Kokkos::CudaUVMSpace>::accessible);
 
   //--------------------------------------
+
+#endif
 
   static_assert(
       !Kokkos::SpaceAccessibility<Kokkos::Cuda, Kokkos::HostSpace>::accessible);

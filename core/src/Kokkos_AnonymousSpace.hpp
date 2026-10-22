@@ -59,6 +59,7 @@ template <class ExecutionSpace>
 struct is_accessible_mem_space_helper<ExecutionSpace, AnonymousSpace, true>
     : std::true_type {};
 
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <typename OtherSpace>
 struct MemorySpaceAccess<Kokkos::AnonymousSpace, OtherSpace> {
   enum : bool { assignable = true };
@@ -76,6 +77,7 @@ struct MemorySpaceAccess<Kokkos::AnonymousSpace, Kokkos::AnonymousSpace> {
   enum : bool { assignable = true };
   enum : bool { accessible = true };
 };
+#endif
 
 }  // namespace Impl
 

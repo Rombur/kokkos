@@ -89,8 +89,9 @@ class MemoryPool {
   using base_memory_space = typename DeviceType::memory_space;
 
   enum {
-    accessible = Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
-                                                 base_memory_space>::accessible
+    accessible =
+        Kokkos::is_accessible_mem_space_v<Kokkos::DefaultHostExecutionSpace,
+                                          base_memory_space>
   };
 
   using Tracker = Kokkos::Impl::SharedAllocationTracker;

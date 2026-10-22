@@ -35,8 +35,8 @@ class Kokkos::Impl::ParallelReduce<
         m_policy(p),
         m_result_ptr(v.data()),
         m_result_ptr_device_accessible(
-            MemorySpaceAccess<Kokkos::SYCLDeviceUSMSpace,
-                              typename View::memory_space>::accessible) {}
+            Kokkos::is_accessible_mem_space_v<Kokkos::SYCL,
+                                              typename View::memory_space>) {}
 
  private:
   template <typename PolicyType, typename CombinedFunctorReducerWrapper>

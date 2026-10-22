@@ -40,6 +40,7 @@ set(COMPILE_ONLY_SOURCES
     TestBitManipulation.cpp
     TestHalfCommonType.cpp
     TestInterOp.cpp
+    TestMemorySpaceAccess.cpp
     TestRangePolicyCTAD.cpp
     TestSharedSpaceCompileOnly.cpp
     TestStringManipulation.cpp

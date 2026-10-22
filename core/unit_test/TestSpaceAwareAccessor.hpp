@@ -122,14 +122,12 @@ void test_space_aware_accessor_conversion() {
         static_assert(std::is_convertible_v<acc_t, const_acc_t>);
         static_assert(!std::is_constructible_v<acc_t, const_acc_t>);
         static_assert(!std::is_constructible_v<acc_t, int_acc_t>);
-        static_assert(
-            std::is_constructible_v<acc_t, host_acc_t> ==
-            Kokkos::Impl::MemorySpaceAccess<memory_space_t,
-                                            Kokkos::HostSpace>::assignable);
-        static_assert(
-            std::is_constructible_v<host_acc_t, acc_t> ==
-            Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
-                                            memory_space_t>::assignable);
+        static_assert(std::is_constructible_v<acc_t, host_acc_t> ==
+                      Kokkos::is_assignable_mem_space_v<memory_space_t,
+                                                        Kokkos::HostSpace>);
+        static_assert(std::is_constructible_v<host_acc_t, acc_t> ==
+                      Kokkos::is_assignable_mem_space_v<Kokkos::HostSpace,
+                                                        memory_space_t>);
         static_assert(std::is_constructible_v<anon_acc_t, acc_t>);
         static_assert(std::is_constructible_v<acc_t, anon_acc_t>);
         static_assert(std::is_convertible_v<anon_acc_t, acc_t>);

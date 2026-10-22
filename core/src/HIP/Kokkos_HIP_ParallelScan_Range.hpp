@@ -377,8 +377,8 @@ class ParallelScanWithTotal<FunctorType, Kokkos::RangePolicy<Traits...>,
                         const typename Base::Policy& arg_policy,
                         const ViewType& arg_result_view)
       : Base(arg_functor, arg_policy, arg_result_view.data(),
-             MemorySpaceAccess<HIPSpace,
-                               typename ViewType::memory_space>::accessible) {}
+             Kokkos::is_accessible_mem_space_v<
+                 Kokkos::HIP, typename ViewType::memory_space>) {}
 
   inline unsigned local_block_size(const FunctorType& f) {
     // blockDim.y must be power of two = 128 (2 warps) or 256 (4 warps) or

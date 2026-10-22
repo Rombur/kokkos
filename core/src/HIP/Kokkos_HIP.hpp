@@ -116,11 +116,14 @@ template <>
 struct is_assignable_mem_space_helper<HIPSpace, HIP::scratch_memory_space, true>
     : std::false_type {};
 
+#ifdef KOKKOS_ENABLE_DEPRECATED_CODE_5
 template <>
 struct MemorySpaceAccess<HIPSpace, HIP::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };
 };
+#endif
+
 }  // namespace Impl
 
 namespace Tools {
