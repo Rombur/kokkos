@@ -299,6 +299,91 @@ struct Impl::is_hip_type_space<HIPManagedSpace> : public std::true_type {};
 namespace Kokkos {
 namespace Impl {
 
+// Assignment relationships for HIP memory spaces.
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, HIPSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, HIPManagedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, HIPHostPinnedSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPSpace, HIPSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPSpace, HIPManagedSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPSpace, HIPHostPinnedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPManagedSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPManagedSpace, HIPSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPManagedSpace, HIPManagedSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPManagedSpace, HIPHostPinnedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPHostPinnedSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPHostPinnedSpace, HIPSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPHostPinnedSpace, HIPManagedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPHostPinnedSpace, HIPHostPinnedSpace,
+                                      true> : std::true_type {};
+
+// Execution access to HIP memory spaces.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, HIPSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, HIP>
+#ifdef KOKKOS_IMPL_HIP_UNIFIED_MEMORY
+          || std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>
+#endif
+          > {
+};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, HIPManagedSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, HIP> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, HIPHostPinnedSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, HIP> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
 static_assert(Kokkos::Impl::MemorySpaceAccess<HIPSpace, HIPSpace>::assignable);
 
 //----------------------------------------

@@ -11,6 +11,85 @@ import kokkos.core;
 
 namespace Test {
 
+template <class ExecutionSpace>
+constexpr bool check_hip_memory_access() {
+  constexpr bool is_hip = std::is_same_v<ExecutionSpace, Kokkos::HIP>;
+  constexpr bool is_host =
+      std::is_same_v<typename ExecutionSpace::memory_space, Kokkos::HostSpace>;
+
+#ifdef KOKKOS_IMPL_HIP_UNIFIED_MEMORY
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::HIPSpace> ==
+      (is_hip || is_host));
+#else
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::HIPSpace> ==
+      is_hip);
+#endif
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecutionSpace,
+                                                  Kokkos::HIPManagedSpace> ==
+                (is_hip || is_host));
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecutionSpace,
+                                                  Kokkos::HIPHostPinnedSpace> ==
+                (is_hip || is_host));
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::HostSpace> ==
+      is_host);
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace,
+                                        Kokkos::HIP::scratch_memory_space> ==
+      is_hip);
+  return true;
+}
+
+TEST(hip, memory_space_traits) {
+  using Host    = Kokkos::HostSpace;
+  using Device  = Kokkos::HIPSpace;
+  using Managed = Kokkos::HIPManagedSpace;
+  using Pinned  = Kokkos::HIPHostPinnedSpace;
+
+  static_assert(Kokkos::is_assignable_mem_space_v<Host, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Host, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Host, Managed>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Host, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Host>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Device, Device>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Device, Managed>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<Managed, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Managed, Device>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Managed, Managed>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Managed, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, Managed>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Pinned, Pinned>);
+
+  using Scratch = Kokkos::HIP::scratch_memory_space;
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Scratch>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Scratch, Scratch>);
+  static_assert(!Kokkos::is_accessible_mem_space_v<void, Device>);
+  static_assert(!Kokkos::is_accessible_mem_space_v<Host, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Managed &>);
+
+  static_assert(check_hip_memory_access<Kokkos::HIP>());
+#ifdef KOKKOS_ENABLE_SERIAL
+  static_assert(check_hip_memory_access<Kokkos::Serial>());
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+  static_assert(check_hip_memory_access<Kokkos::OpenMP>());
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+  static_assert(check_hip_memory_access<Kokkos::Threads>());
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+  static_assert(check_hip_memory_access<Kokkos::Experimental::HPX>());
+#endif
+}
+
 __global__ void test_abort() { Kokkos::abort("test_abort"); }
 
 __global__ void test_hip_spaces_int_value(int *ptr) {

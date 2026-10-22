@@ -104,6 +104,19 @@ class HIP {
 
 namespace Impl {
 template <>
+struct is_accessible_mem_space_helper<HIP, HostSpace, true> : std::false_type {
+};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, HIP::scratch_memory_space,
+                                      true>
+    : std::is_same<ExecutionSpace, HIP> {};
+
+template <>
+struct is_assignable_mem_space_helper<HIPSpace, HIP::scratch_memory_space, true>
+    : std::false_type {};
+
+template <>
 struct MemorySpaceAccess<HIPSpace, HIP::scratch_memory_space> {
   enum : bool { assignable = false };
   enum : bool { accessible = true };

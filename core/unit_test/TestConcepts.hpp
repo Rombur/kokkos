@@ -130,7 +130,8 @@ static_assert(
 #endif
 #ifdef KOKKOS_ENABLE_HIP
         ,
-        Kokkos::HIPSpace, Kokkos::HIPManagedSpace, Kokkos::HIPHostPinnedSpace
+        Kokkos::HIPSpace, Kokkos::HIPManagedSpace, Kokkos::HIPHostPinnedSpace,
+        Kokkos::HIP::scratch_memory_space
 #endif
 #ifdef KOKKOS_ENABLE_SYCL
         ,
