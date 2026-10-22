@@ -75,6 +75,21 @@ class NextSilicon {
 }  // namespace Experimental
 
 namespace Impl {
+// Preserve the HostMirror workaround: use a host execution space for mirrors.
+template <>
+struct is_accessible_mem_space_helper<Experimental::NextSilicon, HostSpace,
+                                      true> : std::false_type {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<
+    ExecutionSpace, Experimental::NextSilicon::scratch_memory_space, true>
+    : std::is_same<ExecutionSpace, Experimental::NextSilicon> {};
+
+template <>
+struct is_assignable_mem_space_helper<
+    Experimental::NextSiliconSharedSpace,
+    Experimental::NextSilicon::scratch_memory_space, true> : std::false_type {};
+
 template <>
 struct MemorySpaceAccess<Experimental::NextSiliconSharedSpace,
                          Experimental::NextSilicon::scratch_memory_space> {

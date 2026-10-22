@@ -94,6 +94,26 @@ class NextSiliconSharedSpace {
 namespace Kokkos {
 namespace Impl {
 
+template <>
+struct is_assignable_mem_space_helper<
+    HostSpace, Experimental::NextSiliconSharedSpace, true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<Experimental::NextSiliconSharedSpace,
+                                      HostSpace, true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<Experimental::NextSiliconSharedSpace,
+                                      Experimental::NextSiliconSharedSpace,
+                                      true> : std::true_type {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<
+    ExecutionSpace, Experimental::NextSiliconSharedSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, Experimental::NextSilicon> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
 static_assert(Kokkos::Impl::MemorySpaceAccess<
               Experimental::NextSiliconSharedSpace,
               Experimental::NextSiliconSharedSpace>::assignable);

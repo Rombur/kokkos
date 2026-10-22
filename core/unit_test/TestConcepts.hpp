@@ -143,6 +143,11 @@ static_assert(
         Kokkos::Experimental::OpenACCSpace,
         Kokkos::Experimental::OpenACC::scratch_memory_space
 #endif
+#ifdef KOKKOS_ENABLE_NEXTSILICON
+        ,
+        Kokkos::Experimental::NextSiliconSharedSpace,
+        Kokkos::Experimental::NextSilicon::scratch_memory_space
+#endif
         >());
 
 template <class HostExecutionSpace>
@@ -245,6 +250,57 @@ static_assert(!Kokkos::is_assignable_mem_space_v<
 static_assert(!Kokkos::is_accessible_mem_space_v<
               Kokkos::Experimental::OpenACC,
               Kokkos::DefaultHostExecutionSpace::scratch_memory_space>);
+#endif
+
+#ifdef KOKKOS_ENABLE_NEXTSILICON
+template <class ExecSpace>
+constexpr bool check_nextsilicon_memory_access() {
+  using NextSilicon             = Kokkos::Experimental::NextSilicon;
+  using SharedSpace             = Kokkos::Experimental::NextSiliconSharedSpace;
+  constexpr bool is_nextsilicon = std::is_same_v<ExecSpace, NextSilicon>;
+  constexpr bool is_host =
+      std::is_same_v<typename ExecSpace::memory_space, Kokkos::HostSpace>;
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecSpace, SharedSpace> ==
+                (is_nextsilicon || is_host));
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecSpace, Kokkos::HostSpace> ==
+      is_host);
+  static_assert(Kokkos::is_accessible_mem_space_v<
+                    ExecSpace, typename NextSilicon::scratch_memory_space> ==
+                is_nextsilicon);
+  return true;
+}
+
+static_assert(
+    check_nextsilicon_memory_access<Kokkos::Experimental::NextSilicon>());
+#ifdef KOKKOS_ENABLE_SERIAL
+static_assert(check_nextsilicon_memory_access<Kokkos::Serial>());
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+static_assert(check_nextsilicon_memory_access<Kokkos::OpenMP>());
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+static_assert(check_nextsilicon_memory_access<Kokkos::Threads>());
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+static_assert(check_nextsilicon_memory_access<Kokkos::Experimental::HPX>());
+#endif
+
+static_assert(!Kokkos::is_assignable_mem_space_v<
+              Kokkos::HostSpace, Kokkos::Experimental::NextSiliconSharedSpace>);
+static_assert(!Kokkos::is_assignable_mem_space_v<
+              Kokkos::Experimental::NextSiliconSharedSpace, Kokkos::HostSpace>);
+static_assert(Kokkos::is_assignable_mem_space_v<
+              Kokkos::Experimental::NextSiliconSharedSpace,
+              Kokkos::Experimental::NextSiliconSharedSpace>);
+static_assert(!Kokkos::is_assignable_mem_space_v<
+              Kokkos::Experimental::NextSiliconSharedSpace,
+              Kokkos::Experimental::NextSilicon::scratch_memory_space>);
+static_assert(std::is_same_v<
+              Kokkos::Impl::HostMirror<
+                  Kokkos::Experimental::NextSiliconSharedSpace>::device_type,
+              Kokkos::Device<Kokkos::DefaultHostExecutionSpace,
+                             Kokkos::Experimental::NextSiliconSharedSpace>>);
 #endif
 
 static_assert(Kokkos::is_assignable_mem_space_v<MemorySpace, MemorySpace>);
