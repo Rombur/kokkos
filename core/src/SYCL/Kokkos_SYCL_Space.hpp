@@ -180,6 +180,85 @@ struct is_sycl_type_space<Kokkos::SYCLSharedUSMSpace> : public std::true_type {
 template <>
 struct is_sycl_type_space<Kokkos::SYCLHostUSMSpace> : public std::true_type {};
 
+// Assignment relationships for SYCL memory spaces.
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, SYCLDeviceUSMSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, SYCLSharedUSMSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, SYCLHostUSMSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLDeviceUSMSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLDeviceUSMSpace, SYCLDeviceUSMSpace,
+                                      true> : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLDeviceUSMSpace, SYCLSharedUSMSpace,
+                                      true> : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLDeviceUSMSpace, SYCLHostUSMSpace,
+                                      true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLSharedUSMSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLSharedUSMSpace, SYCLDeviceUSMSpace,
+                                      true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLSharedUSMSpace, SYCLSharedUSMSpace,
+                                      true> : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLSharedUSMSpace, SYCLHostUSMSpace,
+                                      true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLHostUSMSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLHostUSMSpace, SYCLDeviceUSMSpace,
+                                      true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLHostUSMSpace, SYCLSharedUSMSpace,
+                                      true> : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLHostUSMSpace, SYCLHostUSMSpace, true>
+    : std::true_type {};
+
+// Execution access to SYCL memory spaces.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, SYCLDeviceUSMSpace, true>
+    : std::bool_constant<std::is_same_v<ExecutionSpace, SYCL>> {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, SYCLSharedUSMSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, SYCL> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, SYCLHostUSMSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, SYCL> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
 static_assert(
     Kokkos::Impl::MemorySpaceAccess<Kokkos::SYCLDeviceUSMSpace,
                                     Kokkos::SYCLDeviceUSMSpace>::assignable);

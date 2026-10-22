@@ -136,7 +136,7 @@ static_assert(
 #ifdef KOKKOS_ENABLE_SYCL
         ,
         Kokkos::SYCLDeviceUSMSpace, Kokkos::SYCLSharedUSMSpace,
-        Kokkos::SYCLHostUSMSpace
+        Kokkos::SYCLHostUSMSpace, Kokkos::SYCL::scratch_memory_space
 #endif
         >());
 

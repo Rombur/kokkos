@@ -101,6 +101,23 @@ class SYCL {
   Kokkos::Impl::HostSharedPtr<Impl::SYCLInternal> m_space_instance;
 };
 
+namespace Impl {
+template <>
+struct is_accessible_mem_space_helper<SYCL, HostSpace, true> : std::false_type {
+};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace,
+                                      SYCL::scratch_memory_space, true>
+    : std::is_same<ExecutionSpace, SYCL> {};
+
+template <>
+struct is_assignable_mem_space_helper<SYCLDeviceUSMSpace,
+                                      SYCL::scratch_memory_space, true>
+    : std::false_type {};
+
+}  // namespace Impl
+
 namespace Tools {
 namespace Experimental {
 template <>
