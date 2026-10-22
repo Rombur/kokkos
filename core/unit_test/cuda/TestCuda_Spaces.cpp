@@ -11,6 +11,86 @@ import kokkos.core;
 
 namespace Test {
 
+template <class ExecutionSpace>
+constexpr bool check_cuda_memory_access() {
+  constexpr bool is_cuda = std::is_same_v<ExecutionSpace, Kokkos::Cuda>;
+  constexpr bool is_host =
+      std::is_same_v<typename ExecutionSpace::memory_space, Kokkos::HostSpace>;
+
+#ifdef KOKKOS_ENABLE_IMPL_CUDA_UNIFIED_MEMORY
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::CudaSpace> ==
+      (is_cuda || is_host));
+#else
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::CudaSpace> ==
+      is_cuda);
+#endif
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::CudaUVMSpace> ==
+      (is_cuda || is_host));
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace,
+                                        Kokkos::CudaHostPinnedSpace> ==
+      (is_cuda || is_host));
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace, Kokkos::HostSpace> ==
+      is_host);
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecutionSpace,
+                                        Kokkos::Cuda::scratch_memory_space> ==
+      is_cuda);
+  return true;
+}
+
+TEST(cuda, memory_space_traits) {
+  using Host   = Kokkos::HostSpace;
+  using Device = Kokkos::CudaSpace;
+  using UVM    = Kokkos::CudaUVMSpace;
+  using Pinned = Kokkos::CudaHostPinnedSpace;
+
+  static_assert(Kokkos::is_assignable_mem_space_v<Host, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Host, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Host, UVM>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Host, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Host>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Device, Device>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Device, UVM>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<UVM, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<UVM, Device>);
+  static_assert(Kokkos::is_assignable_mem_space_v<UVM, UVM>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<UVM, Pinned>);
+
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, Host>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Pinned, UVM>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Pinned, Pinned>);
+
+  using Scratch = Kokkos::Cuda::scratch_memory_space;
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, Scratch>);
+  static_assert(Kokkos::is_assignable_mem_space_v<Scratch, Scratch>);
+  static_assert(!Kokkos::is_accessible_mem_space_v<void, Device>);
+  static_assert(!Kokkos::is_accessible_mem_space_v<Host, Device>);
+  static_assert(!Kokkos::is_assignable_mem_space_v<Device, UVM &>);
+
+  static_assert(check_cuda_memory_access<Kokkos::Cuda>());
+#ifdef KOKKOS_ENABLE_SERIAL
+  static_assert(check_cuda_memory_access<Kokkos::Serial>());
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+  static_assert(check_cuda_memory_access<Kokkos::OpenMP>());
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+  static_assert(check_cuda_memory_access<Kokkos::Threads>());
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+  static_assert(check_cuda_memory_access<Kokkos::Experimental::HPX>());
+#endif
+}
+
 __global__ void test_abort() { Kokkos::abort("test_abort"); }
 
 __global__ void test_cuda_spaces_int_value(int *ptr) {

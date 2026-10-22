@@ -125,7 +125,8 @@ static_assert(
 #endif
 #ifdef KOKKOS_ENABLE_CUDA
         ,
-        Kokkos::CudaSpace, Kokkos::CudaUVMSpace, Kokkos::CudaHostPinnedSpace
+        Kokkos::CudaSpace, Kokkos::CudaUVMSpace, Kokkos::CudaHostPinnedSpace,
+        Kokkos::Cuda::scratch_memory_space
 #endif
 #ifdef KOKKOS_ENABLE_HIP
         ,

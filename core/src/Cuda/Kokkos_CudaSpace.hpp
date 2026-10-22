@@ -332,6 +332,91 @@ namespace Impl {
 
 cudaStream_t cuda_get_deep_copy_stream();
 
+// Assignment relationships for CUDA memory spaces.
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, CudaSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, CudaUVMSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, CudaHostPinnedSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaSpace, CudaSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaSpace, CudaUVMSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaSpace, CudaHostPinnedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaUVMSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaUVMSpace, CudaSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaUVMSpace, CudaUVMSpace, true>
+    : std::true_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaUVMSpace, CudaHostPinnedSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaHostPinnedSpace, HostSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaHostPinnedSpace, CudaSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaHostPinnedSpace, CudaUVMSpace, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaHostPinnedSpace, CudaHostPinnedSpace,
+                                      true> : std::true_type {};
+
+// Execution access to CUDA memory spaces.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, CudaSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, Cuda>
+#ifdef KOKKOS_ENABLE_IMPL_CUDA_UNIFIED_MEMORY
+          || std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>
+#endif
+          > {
+};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, CudaUVMSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, Cuda> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace, CudaHostPinnedSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, Cuda> ||
+          std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>> {};
+
 static_assert(Kokkos::Impl::MemorySpaceAccess<Kokkos::CudaSpace,
                                               Kokkos::CudaSpace>::assignable);
 static_assert(Kokkos::Impl::MemorySpaceAccess<

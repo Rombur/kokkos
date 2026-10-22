@@ -197,6 +197,19 @@ namespace Kokkos {
 namespace Impl {
 
 template <>
+struct is_accessible_mem_space_helper<Cuda, HostSpace, true> : std::false_type {
+};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace,
+                                      Cuda::scratch_memory_space, true>
+    : std::is_same<ExecutionSpace, Cuda> {};
+
+template <>
+struct is_assignable_mem_space_helper<CudaSpace, Cuda::scratch_memory_space,
+                                      true> : std::false_type {};
+
+template <>
 struct MemorySpaceAccess<Kokkos::CudaSpace,
                          Kokkos::Cuda::scratch_memory_space> {
   enum : bool { assignable = false };
