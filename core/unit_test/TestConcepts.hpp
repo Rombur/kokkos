@@ -138,6 +138,11 @@ static_assert(
         Kokkos::SYCLDeviceUSMSpace, Kokkos::SYCLSharedUSMSpace,
         Kokkos::SYCLHostUSMSpace, Kokkos::SYCL::scratch_memory_space
 #endif
+#ifdef KOKKOS_ENABLE_OPENACC
+        ,
+        Kokkos::Experimental::OpenACCSpace,
+        Kokkos::Experimental::OpenACC::scratch_memory_space
+#endif
         >());
 
 template <class HostExecutionSpace>
@@ -187,6 +192,60 @@ static_assert(
     !Kokkos::is_accessible_mem_space_v<MemorySpace, Kokkos::AnonymousSpace>);
 static_assert(!Kokkos::is_accessible_mem_space_v<ExecutionSpace &,
                                                  Kokkos::AnonymousSpace>);
+
+#ifdef KOKKOS_ENABLE_OPENACC
+template <class ExecSpace>
+constexpr bool check_openacc_memory_access() {
+  using OpenACC      = Kokkos::Experimental::OpenACC;
+  using OpenACCSpace = Kokkos::Experimental::OpenACCSpace;
+#ifdef KOKKOS_ENABLE_OPENACC_FORCE_HOST_AS_DEVICE
+  constexpr bool host_as_device = true;
+#else
+  constexpr bool host_as_device = false;
+#endif
+  constexpr bool is_openacc = std::is_same_v<ExecSpace, OpenACC>;
+  constexpr bool is_host =
+      std::is_same_v<typename ExecSpace::memory_space, Kokkos::HostSpace>;
+  static_assert(Kokkos::is_accessible_mem_space_v<ExecSpace, OpenACCSpace> ==
+                (is_openacc || (host_as_device && is_host)));
+  static_assert(
+      Kokkos::is_accessible_mem_space_v<ExecSpace, Kokkos::HostSpace> ==
+      (is_host || (host_as_device && is_openacc)));
+  static_assert(!Kokkos::is_accessible_mem_space_v<
+                ExecSpace, typename OpenACC::scratch_memory_space>);
+  static_assert(
+      Kokkos::is_assignable_mem_space_v<Kokkos::HostSpace, OpenACCSpace> ==
+      host_as_device);
+  static_assert(
+      Kokkos::is_assignable_mem_space_v<OpenACCSpace, Kokkos::HostSpace> ==
+      host_as_device);
+  return true;
+}
+
+static_assert(check_openacc_memory_access<Kokkos::Experimental::OpenACC>());
+#ifdef KOKKOS_ENABLE_SERIAL
+static_assert(check_openacc_memory_access<Kokkos::Serial>());
+#endif
+#ifdef KOKKOS_ENABLE_OPENMP
+static_assert(check_openacc_memory_access<Kokkos::OpenMP>());
+#endif
+#ifdef KOKKOS_ENABLE_THREADS
+static_assert(check_openacc_memory_access<Kokkos::Threads>());
+#endif
+#ifdef KOKKOS_ENABLE_HPX
+static_assert(check_openacc_memory_access<Kokkos::Experimental::HPX>());
+#endif
+
+static_assert(
+    Kokkos::is_assignable_mem_space_v<Kokkos::Experimental::OpenACCSpace,
+                                      Kokkos::Experimental::OpenACCSpace>);
+static_assert(!Kokkos::is_assignable_mem_space_v<
+              Kokkos::Experimental::OpenACCSpace,
+              Kokkos::Experimental::OpenACC::scratch_memory_space>);
+static_assert(!Kokkos::is_accessible_mem_space_v<
+              Kokkos::Experimental::OpenACC,
+              Kokkos::DefaultHostExecutionSpace::scratch_memory_space>);
+#endif
 
 static_assert(Kokkos::is_assignable_mem_space_v<MemorySpace, MemorySpace>);
 static_assert(Kokkos::is_accessible_mem_space_v<ExecutionSpace, MemorySpace>);

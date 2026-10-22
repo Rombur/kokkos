@@ -93,6 +93,25 @@ class OpenACC {
 
 }  // namespace Kokkos::Experimental
 
+namespace Kokkos::Impl {
+
+template <>
+struct is_accessible_mem_space_helper<Experimental::OpenACC, HostSpace, true>
+    : std::bool_constant<openacc_host_as_device> {};
+
+// Preserve the existing trait result: OpenACC scratch memory is inaccessible.
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<
+    ExecutionSpace, Experimental::OpenACC::scratch_memory_space, true>
+    : std::false_type {};
+
+template <>
+struct is_assignable_mem_space_helper<
+    Experimental::OpenACCSpace, Experimental::OpenACC::scratch_memory_space,
+    true> : std::false_type {};
+
+}  // namespace Kokkos::Impl
+
 template <>
 struct Kokkos::Tools::Experimental::DeviceTypeTraits<
     ::Kokkos::Experimental::OpenACC> {

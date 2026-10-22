@@ -75,6 +75,40 @@ class OpenACCSpace {
 
 /*--------------------------------------------------------------------------*/
 
+namespace Kokkos::Impl {
+
+#ifdef KOKKOS_ENABLE_OPENACC_FORCE_HOST_AS_DEVICE
+inline constexpr bool openacc_host_as_device = true;
+#else
+inline constexpr bool openacc_host_as_device = false;
+#endif
+
+template <>
+struct is_assignable_mem_space_helper<HostSpace, Experimental::OpenACCSpace,
+                                      true>
+    : std::bool_constant<openacc_host_as_device> {};
+
+template <>
+struct is_assignable_mem_space_helper<Experimental::OpenACCSpace, HostSpace,
+                                      true>
+    : std::bool_constant<openacc_host_as_device> {};
+
+template <>
+struct is_assignable_mem_space_helper<Experimental::OpenACCSpace,
+                                      Experimental::OpenACCSpace, true>
+    : std::true_type {};
+
+template <class ExecutionSpace>
+struct is_accessible_mem_space_helper<ExecutionSpace,
+                                      Experimental::OpenACCSpace, true>
+    : std::bool_constant<
+          std::is_same_v<ExecutionSpace, Experimental::OpenACC> ||
+          (openacc_host_as_device &&
+           std::is_same_v<typename ExecutionSpace::memory_space, HostSpace>)> {
+};
+
+}  // namespace Kokkos::Impl
+
 template <>
 struct Kokkos::Impl::MemorySpaceAccess<Kokkos::HostSpace,
                                        Kokkos::Experimental::OpenACCSpace> {
